@@ -1,0 +1,20 @@
+{
+    "name": "fpaipl/panel",
+    "description": "It contains variour standalone panel required in main app.",
+    "type": "library",
+    "require": {
+        "livewire/livewire": "^3.0"
+    },
+    "license": "Unlicensed",
+    "autoload": {
+        "psr-4": {
+            "Fpaipl\\Panel\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Santosh Singh",
+            "email": "BackendSR1@FPAIPL.com"
+        }
+    ]
+}
