@@ -2,17 +2,12 @@
 
 namespace App\Listeners;
 
-use App\Events\JobWorkOrderAcceptedEvent;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Queue\InteractsWithQueue;
+use App\Events\PurchaseOrderAcceptedEvent;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Http\Request;
-use App\Http\Requests\PurchaseCreateRequest;
-use App\Http\Providers\PurchaseProvider;
-use App\Models\JobWorkOrder;
+use App\Models\PurchaseOrder;
 
-class JobWorkOrderAcceptedListener
+class PurchaseOrderAcceptedListener
 {
     public $fabrics;
     /**
@@ -72,16 +67,16 @@ class JobWorkOrderAcceptedListener
     /**
      * Handle the event.
      */
-    public function handle(JobWorkOrderAcceptedEvent $event): void
+    public function handle(PurchaseOrderAcceptedEvent $event): void
     {
         //Log::info($event->jobworkorder);
 
         $response = Http::post(env('MONAL_APP').'/api/saleorders', [
-            'customer_id' => $event->jobworkorder->fabricator_id,
-            'customer_sid' => $event->jobworkorder->fabricator_sid,
+            'customer_id' => $event->purchaseorder->fabricator_id,
+            'customer_sid' => $event->purchaseorder->fabricator_sid,
             'stock_id' => 1,
-            'job_work_order_sid' => $event->jobworkorder->sid,
-            'quantities' => $event->jobworkorder->quantities,
+            'purchase_order_sid' => $event->purchaseorder->sid,
+            'quantities' => $event->purchaseorder->quantities,
 
         ]);
 
@@ -89,8 +84,8 @@ class JobWorkOrderAcceptedListener
 
         if ($response->successful()) {
 
-            $event->jobworkorder->status = JobWorkOrder::FINAL_STATUS;
-            $event->jobworkorder->save();
+            $event->purchaseorder->status = PurchaseOrder::FINAL_STATUS;
+            $event->purchaseorder->save();
         }
 
     }

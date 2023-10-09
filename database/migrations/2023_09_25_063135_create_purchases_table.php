@@ -13,8 +13,8 @@ return new class extends Migration
     {
         Schema::create('purchases', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('job_work_order_id')->constrained();
-            $table->string('job_work_order_sid');
+            $table->foreignId('purchase_order_id')->constrained();
+            $table->string('purchase_order_sid');
             $table->unsignedBigInteger('product_id');
             $table->string('product_sid');
             $table->unsignedBigInteger('fabricator_id');

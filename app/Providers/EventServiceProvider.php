@@ -6,8 +6,8 @@ use Illuminate\Auth\Events\Registered;
 use Illuminate\Auth\Listeners\SendEmailVerificationNotification;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
 use Illuminate\Support\Facades\Event;
-use App\Events\JobWorkOrderAcceptedEvent;
-use App\Listeners\JobWorkOrderAcceptedListener;
+use App\Events\PurchaseOrderAcceptedEvent;
+use App\Listeners\PurchaseOrderAcceptedListener;
 
 use App\Events\PurchaseReceivedEvent;
 use App\Listeners\PurchaseReceivedListener;
@@ -23,8 +23,8 @@ class EventServiceProvider extends ServiceProvider
         Registered::class => [
             SendEmailVerificationNotification::class,
         ],
-        JobWorkOrderAcceptedEvent::class => [
-            JobWorkOrderAcceptedListener::class,
+        PurchaseOrderAcceptedEvent::class => [
+            PurchaseOrderAcceptedListener::class,
         ],
         PurchaseReceivedEvent::class => [
             PurchaseReceivedListener::class,

@@ -5,7 +5,7 @@ use Illuminate\Validation\Rule;
 use Illuminate\Foundation\Http\FormRequest;
 use App\Http\Requests\BaseRequest;
 
-class JobWorkOrderUpdateRequest extends BaseRequest
+class PurchaseOrderUpdateRequest extends BaseRequest
 {
 
     /**
@@ -20,7 +20,7 @@ class JobWorkOrderUpdateRequest extends BaseRequest
             'status' => [$this->getStatusValidationRule(),'in:next,cancelled'],
             'quantities' => [$this->getQuantitiesValidationRule(), 'string'],
             'quantities.*' => ['integer', 'min:1'],
-            'expected_at' => [$this->getExpectedAtValidationRule(),'date_format:Y-m-d'],
+            'expected_at' => [$this->getExpectedAtValidationRule(),'after_or_equal:today','date_format:Y-m-d'],
         ];
     }
 

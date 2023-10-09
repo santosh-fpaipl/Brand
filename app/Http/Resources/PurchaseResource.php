@@ -21,13 +21,13 @@ class PurchaseResource extends JsonResource
         return [
             "id" => $this->id,
             "sid" => $this->sid,
-            "job_work_order" => [
-                'sid' => $this->jobWorkOrder->sid,
-                'quantity' => $this->jobWorkOrder->quantity,
-                'quantities' => json_decode($this->jobWorkOrder->quantities),
-                'message' => json_decode($this->jobWorkOrder->message),
-                'created_at' => $this->jobWorkOrder->created_at->format('Y-m-d'),
-                'expected_at' => $this->jobWorkOrder->expected_at,
+            "purchase_order" => [
+                'sid' => $this->purchaseOrder->sid,
+                'quantity' => $this->purchaseOrder->quantity,
+                'quantities' => json_decode($this->purchaseOrder->quantities),
+                'message' => json_decode($this->purchaseOrder->message),
+                'created_at' => $this->purchaseOrder->created_at->format('Y-m-d'),
+                'expected_at' => $this->purchaseOrder->expected_at,
             ],
             "product" => [
                 'id' => $this->product_id,

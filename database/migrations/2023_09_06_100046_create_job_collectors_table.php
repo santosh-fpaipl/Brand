@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('collectors', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('job_work_order_id')->constrained();
+            $table->foreignId('purchase_order_id')->constrained();
             $table->integer('quantity')->default(0);
             $table->json('quantities');
             $table->timestamps();

@@ -16,8 +16,8 @@ class PurchaseCreateRequest extends BaseRequest
     public function rules(): array
     {
         return [
-            'job_work_order_sid' => ['required', 'string','exists:job_work_orders,sid'],
-            'quantities' => ['required', 'string'],
+            'purchase_order_sid' => ['required', 'string','exists:purchase_orders,sid'],
+            //'quantities' => ['required', 'string'],
             'invoice_no' => ['required', 'string'],
             'invoice_date' => 'required|date_format:Y-m-d',
             'message' => ['required', 'string']

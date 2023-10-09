@@ -5,7 +5,6 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Fpaipl\Panel\Traits\CascadeSoftDeletes;
 use Fpaipl\Panel\Traits\CascadeSoftDeletesRestore;
-use Fpaipl\Panel\Traits\ManageMedia;
 use Fpaipl\Panel\Traits\ManageModel;
 use Fpaipl\Panel\Traits\ManageTag;
 use Fpaipl\Panel\Traits\Authx;
@@ -22,7 +21,6 @@ class Purchase extends Model
         CascadeSoftDeletes,
         CascadeSoftDeletesRestore,
         LogsActivity,
-        ManageMedia,
         ManageModel,
         ManageTag;
 
@@ -33,11 +31,10 @@ class Purchase extends Model
     /*
         Auto Generated Columns:
         id
-        slug
     */
     protected $fillable = [
-        'job_work_order_id',
-        'job_work_order_sid',
+        'purchase_order_id',
+        'purchase_order_sid',
         'product_id', 
         'product_sid',
         'fabricator_id',
@@ -67,15 +64,6 @@ class Purchase extends Model
 
     public const STATUS = ['cutting','production','packing','ready','requested','dispatched','completed','cancelled'];
 
-
-    public function hasDependency(){
-        return count($this->dependency);
-    }
-
-    public function getDependency(){
-        return $this->dependency;
-    }
-
     public function getRouteKeyName()
     {
         return 'sid';
@@ -100,8 +88,8 @@ class Purchase extends Model
 
     // Relationships
     
-    public function jobWorkOrder(){
-        return $this->belongsTo(JobWorkOrder::class);
+    public function purchaseOrder(){
+        return $this->belongsTo(PurchaseOrder::class);
     }
 
     // Logging
@@ -111,8 +99,8 @@ class Purchase extends Model
         return LogOptions::defaults()
             ->logOnly([
                     'id', 
-                    'job_work_order_id',
-                    'job_work_order_sid',
+                    'purchase_order_id',
+                    'purchase_order_sid',
                     'product_id', 
                     'product_sid',
                     'fabricator_id',

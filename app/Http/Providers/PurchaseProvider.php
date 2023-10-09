@@ -11,7 +11,7 @@ use App\Http\Requests\PurchaseUpdateRequest;
 use App\Http\Resources\PurchaseResource;
 use App\Http\Resources\PurchaseMessageResource;
 use App\Events\PurchaseReceivedEvent;
-use App\Models\JobWorkOrder;
+use App\Models\PurchaseOrder;
 use Illuminate\Support\Facades\Http;
 use Exception;
 use Carbon\Carbon;
@@ -49,9 +49,9 @@ class PurchaseProvider extends Provider
         
         $quantity = 0;
 
-        //$originalData = '[{"green1_S1":1313},{"green1_M1":1313},{"green1_L1":1313},{"blue1_S1":1313},{"blue1_M1":1313},{"blue1_L1":1313}]';
+        $quantities = '[{"green1_S1":1313},{"green1_M1":1313},{"green1_L1":1313},{"blue1_S1":1313},{"blue1_M1":1313},{"blue1_L1":1313}]';
         
-        $quantities = json_decode($request->quantities, true);
+        $quantities = json_decode($quantities, true);
 
         foreach($quantities as $qty){
             $quantity += array_sum($qty);
@@ -70,7 +70,7 @@ class PurchaseProvider extends Provider
         try{
             $purchase = '';
 
-            $jobWorkOrder = JobWorkOrder::where('sid', $request->job_work_order_sid)->first();
+            $purchaseOrder = PurchaseOrder::where('sid', $request->purchase_order_sid)->first();
 
 
             $requestMsgArr = json_decode($request->message, true);
@@ -81,24 +81,24 @@ class PurchaseProvider extends Provider
 
             //Log::info($requestMsgArr);
 
-            $messageArr = json_decode($jobWorkOrder->message, true);
+            $messageArr = json_decode($purchaseOrder->message, true);
 
             array_push($messageArr, $requestMsgArr);
 
             $purchase = Purchase::create([
-                'job_work_order_id' => $jobWorkOrder->id,
-                'job_work_order_sid' => $jobWorkOrder->sid,
-                'product_id' => $jobWorkOrder->product_id,
-                'product_sid' => $jobWorkOrder->product_sid,
-                'fabricator_id' => $jobWorkOrder->fabricator_id,
-                'fabricator_sid' => $jobWorkOrder->fabricator_sid,
+                'purchase_order_id' => $purchaseOrder->id,
+                'purchase_order_sid' => $purchaseOrder->sid,
+                'product_id' => $purchaseOrder->product_id,
+                'product_sid' => $purchaseOrder->product_sid,
+                'fabricator_id' => $purchaseOrder->fabricator_id,
+                'fabricator_sid' => $purchaseOrder->fabricator_sid,
                 'sid' => Purchase::generateId(),
                 'invoice_no' => $request->invoice_no,
                 'invoice_date' => $request->invoice_date,
                 'quantity' => $quantity,
                 'quantities' => json_encode($newDataStructure),
                 'message' => json_encode($messageArr),
-                'log_status_time' => $jobWorkOrder->log_status_time,
+                'log_status_time' => $purchaseOrder->log_status_time,
             ]);
 
             //To log the status timestamp
@@ -193,7 +193,7 @@ class PurchaseProvider extends Provider
                             }
                         }
 
-                        $expected_at_time = Carbon::parse($purchase->jobWorkOrder->expected_at);
+                        $expected_at_time = Carbon::parse($purchase->purchaseOrder->expected_at);
                         $completed_at_time = Carbon::parse($complete_time);
 
                         // Add a positive or negative sign based on the difference
@@ -201,11 +201,11 @@ class PurchaseProvider extends Provider
 
                         $time_difference = $sign.$expected_at_time->diffInDays($completed_at_time);
 
-                        $loss_quantity =  $purchase->quantity - $purchase->jobWorkOrder->quantity;
+                        $loss_quantity =  $purchase->quantity - $purchase->purchaseOrder->quantity;
 
                         $loss_quantities = [];
 
-                        $jwo_quantities = json_decode($purchase->jobWorkOrder->quantities, true);
+                        $jwo_quantities = json_decode($purchase->purchaseOrder->quantities, true);
 
                         foreach(json_decode($purchase->quantities, true) as $key => $value){
                             $loss_quantities[$key] = $value - $jwo_quantities[$key];

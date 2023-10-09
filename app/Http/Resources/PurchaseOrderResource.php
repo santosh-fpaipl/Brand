@@ -1,15 +1,14 @@
 <?php
 
 namespace App\Http\Resources;
-use Illuminate\Support\Facades\Cache;
+
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use App\Http\Resources\ProductOptionResource;
 use App\Http\Resources\ProductRangeResource;
 use App\Services\ProductRepository;
-use Carbon\Carbon;
 
-class JobWorkOrderResource extends JsonResource
+class PurchaseOrderResource extends JsonResource
 {
     /**
      * Transform the resource into an array.
@@ -18,7 +17,6 @@ class JobWorkOrderResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        //return parent::toArray($request);
         $product = ProductRepository::get($this->product_sid);
         return [
             'id' => $this->id,

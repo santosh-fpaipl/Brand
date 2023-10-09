@@ -10,18 +10,18 @@ use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
-class JobWorkOrderAcceptedEvent
+class PurchaseOrderAcceptedEvent
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
-    public $jobworkorder;
+    public $purchaseorder;
 
     /**
      * Create a new event instance.
      */
-    public function __construct($jobworkorder)
+    public function __construct($purchaseorder)
     {
-        $this->jobworkorder = $jobworkorder;
+        $this->purchaseorder = $purchaseorder;
     }
 
     /**
