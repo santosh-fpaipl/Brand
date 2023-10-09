@@ -11,18 +11,27 @@ return new class extends Migration
      */
     public function up(): void
     {
+        /**
+         * Finished Goods
+         */
         Schema::create('stocks', function (Blueprint $table) {
             $table->id();
-            $table->string('sku')->unique(); // unique SKU for this stock
+
+            $table->string('sku')->unique(); // unique SKU for this stock (it contains id of product-option-range)
             $table->integer('quantity')->default(0); // available-in-hand for sale (updated by purchase and sale)
             // $table->integer('roq')->default(1); // Re-Order quantity
             // $table->integer('incoming')->default(0); // order placed yet to recevied (updated by purchase)
             // $table->integer('outgoing')->default(0); // reserved for sale yet to dispatch (updated by sale)
-            $table->unsignedBigInteger('product_id')->nullable(); // product 
-            $table->string('product_sid')->nullable(); // product sid
+            
+            // As per dsa
+            $table->string('product_sid')->nullable(); // product sid 
+            $table->unsignedBigInteger('product_id')->nullable(); // product
             $table->unsignedBigInteger('product_option_id')->nullable(); // product color
             $table->unsignedBigInteger('product_range_id')->nullable(); // product size
+
+            // For ecom app
             $table->boolean('active')->default(true); // enable/disable this stock
+            $table->text('note')->nullable(); // remarks for dead stock
             $table->timestamps();
             $table->softDeletes();
         });

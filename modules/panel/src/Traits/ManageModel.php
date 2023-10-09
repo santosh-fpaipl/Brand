@@ -5,6 +5,14 @@ use Illuminate\Database\Eloquent\Collection;
 
 trait ManageModel
 {
+    public function hasDependency(){
+        return count($this->dependency);
+    }
+
+    public function getDependency(){
+        return $this->dependency;
+    }
+    
     public static function softDeleteModel(array $records, string $model): String
     {
         $hasDependentRecord = false;
