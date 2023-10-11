@@ -17,7 +17,7 @@ class SupplierProvider extends Provider
     public function index()
     {
         Cache::forget('suppliers');
-        $suppliers = Cache::remember('suppliers', 24 * 60 * 60, function () {
+        $suppliers = Cache::remember('suppliers', Supplier::getCacheRemember(), function () {
             return Supplier::with('user')->with('addresses')->get();
         });
         return ApiResponse::success(SupplierResource::collection($suppliers));

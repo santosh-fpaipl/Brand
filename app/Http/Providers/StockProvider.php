@@ -10,8 +10,9 @@ use App\Http\Responses\ApiResponse;
 use App\Models\Stock;
 use App\Http\Resources\StockResource;
 use App\Http\Resources\ShowProductResource;
-use App\Http\Requests\StockCreateRequest;
-use App\Http\Requests\StockDeleteRequest;
+use App\Http\Resources\StockSkuResource;
+use App\Http\Requests\StockRequest;
+use App\Http\Requests\StockUpdateRequest;
 use Exception;
 
 class StockProvider extends Provider
@@ -19,41 +20,57 @@ class StockProvider extends Provider
     /**
     * Display a listing of the resource.
     */
-
-    public function index()
+    public function index(Request $request)
     {
-        $stocks = Stock::select('product_sid', DB::raw('SUM(quantity) as quantity'))->groupBy('product_sid')->where('active', 1)->get();
-        return ApiResponse::success(StockResource::collection($stocks));
+        if($request->has('type') && $request->type == 'sku'){
+            //To get stock sku wise
+            $stocks = Stock::all();
+            return ApiResponse::success(StockSkuResource::collection($stocks));
+        } else {
+            $stocks = Stock::select('product_sid', DB::raw('SUM(quantity) as quantity'))->groupBy('product_sid')->where('active', 1)->get();
+            return ApiResponse::success(StockResource::collection($stocks));
+        }
     }
 
     /**
     * Create a resource
     */
-
-    public function store(StockCreateRequest $request){
+    public function store(StockRequest $request){
 
         DB::beginTransaction();
         try{
 
-           // $options = '[{"id": 1},{"id": 2}]';
+            // $options = '[{"id": 1},{"id": 2}]';
 
-           // $ranges = '[{"id": 1},{"id": 2},{"id": 3}]';
+            // $ranges = '[{"id": 1},{"id": 2},{"id": 3}]';
             
-            $options = json_decode($request->options, true);
-            $ranges = json_decode($request->ranges, true);
-            $product_id = $request->product_id;
+            // make an api call to ds to fetch the product along with options and ranges
+
+            $response = Http::get(env('DS_APP').'/api/internal/products/'.$request->product_sid);
+
+            if ($response->successful()) {
+                $product = $response['data'];
+            } else {
+               throw new Exception('DS:Server Error, Try again later');
+            }
+
+            $options = $product['options'];
+            $ranges = $product['ranges'];
 
             foreach($options as $option){
                 $product_option_id = $option['id'];
                 foreach($ranges as $range){
                     $product_range_id = $range['id'];
-                    $sku = $product_id."-".$product_option_id."-".$product_range_id;
-                    $stock = Stock::where('sku', $sku)->first();
-                    if(!$stock){
+                    $sku = $product['id']."-".$product_option_id."-".$product_range_id;
+                    $stock = Stock::where('sku', $sku)->withTrashed()->first();
+                    if($stock){
+                        if($stock->trashed()){
+                            $stock->restore();
+                        }
+                    } else {
                         Stock::create([
                             'sku' => $sku,
-                            'quantity' => 0,
-                            'product_id' => $product_id,
+                            'product_id' => $product['id'],
                             'product_sid' => $request->product_sid,
                             'product_option_id' => $product_option_id,
                             'product_range_id' => $product_range_id,
@@ -67,7 +84,20 @@ class StockProvider extends Provider
             DB::rollBack();
             return ApiResponse::error($e->getMessage(), 404);
         }
-        return ApiResponse::success('Data created successfully.');
+        return ApiResponse::success('Stock created successfully.');
+    }
+
+    /**
+     * here we consider given id to be a product_sid,
+     * Make stock Active or Inactive by product wise
+     */
+    public function update(StockUpdateRequest $request, Stock $stock){
+        try{
+            DB::table('stocks')->where('product_sid', $stock->product_sid)->update(['active'=> $request->status]);
+        } catch(\Exception $e){
+            return ApiResponse::error($e->getMessage(), 404);
+        }
+        return ApiResponse::success('Product updated successfully');
     }
 
     /**
@@ -81,10 +111,11 @@ class StockProvider extends Provider
         return ApiResponse::success(new ShowProductResource($stock));
     }
 
-    public function getStockAddedStatus(Request $request){
+    public function getStockAddedStatus(Request $request)
+    {
         $status = false;
         try{
-            $stock = Stock::where('product_sid', $request->product_sid)->first();
+            $stock = Stock::where('product_sid', $request->product_sid)->exists();
             if($stock){
                 $status = true;
             }
@@ -94,17 +125,18 @@ class StockProvider extends Provider
         return ApiResponse::success(['status' => $status]);
     }
    
-    public function deleteStock(StockDeleteRequest $request){
+    public function deleteStock(StockRequest $request){
 
         // We can not delete stock if quantity of any sku of a product is greater than 0
         try{
+            // even if any one result is available then we can not delete any on the related also
+            $stockHasQty = Stock::where('product_sid', $request->product_sid)->where('quantity', '>', 0)->exists();
 
-            $stock = Stock::where('product_sid', $request->product_sid)->where('quantity', '>', 0)->first();
-
-            if($stock){
-                throw new Exception('You can not delete product.');
+            if($stockHasQty){
+                throw new Exception('You can not delete product that has stock.');
             } else {
-                Stock::where('product_sid', $request->product_sid)->forceDelete();
+                // delete all related stock
+                Stock::where('product_sid', $request->product_sid)->delete();
             }
             
         } catch(\Exception $e){
@@ -112,5 +144,7 @@ class StockProvider extends Provider
         }
         return ApiResponse::success('Record has been deleted successfully.');
     }
+
+    
     
 }

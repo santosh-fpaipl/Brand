@@ -16,37 +16,12 @@ class PurchaseOrderUpdateRequest extends BaseRequest
     public function rules(): array
     {
         return [
-            'message' => [$this->getMessageValidationRule(), 'string'],
-            'status' => [$this->getStatusValidationRule(),'in:next,cancelled'],
+            'message' => ['nullable','string','min:1'],
+            'status' => ['nullable','in:next,cancelled'],
             'quantities' => [$this->getQuantitiesValidationRule(), 'string'],
             'quantities.*' => ['integer', 'min:1'],
             'expected_at' => [$this->getExpectedAtValidationRule(),'after_or_equal:today','date_format:Y-m-d'],
         ];
-    }
-
-    /**
-    * Get the validation rule for the 'status' field based on the provided inputs.
-    *
-    * @return array|string
-    */
-
-    private function getMessageValidationRule()
-    {
-        if ($this->has('message')) {
-            return 'required';
-        } else {
-            return 'nullable';
-        }
-    }
-    
-
-    private function getStatusValidationRule()
-    {
-        if ($this->has('status')) {
-            return 'required';
-        } else {
-            return 'nullable';
-        }
     }
 
     private function getQuantitiesValidationRule()

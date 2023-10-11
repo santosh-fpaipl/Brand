@@ -64,6 +64,17 @@ class Purchase extends Model
 
     public const STATUS = ['cutting','production','packing','ready','requested','dispatched','completed','cancelled'];
 
+    public static $cache_remember; 
+
+    public static function getCacheRemember()
+    {
+        if (!isset(self::$cache_remember)) {
+            self::$cache_remember = config('api.cache.remember');
+        }
+
+        return self::$cache_remember;
+    }
+    
     public function getRouteKeyName()
     {
         return 'sid';

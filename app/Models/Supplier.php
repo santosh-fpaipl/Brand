@@ -50,20 +50,16 @@ class Supplier extends Model
 
     protected $dependency = [];
 
-    // public static function INDEXABLE(){
-    //     return false;
-    // }
-
-    public function hasDependency()
-    {
-        return count($this->dependency);
-    }
-
-    public function getDependency()
-    {
-        return $this->dependency;
-    }
+    public static $cache_remember; 
     
+    public static function getCacheRemember()
+    {
+        if (!isset(self::$cache_remember)) {
+            self::$cache_remember = config('api.cache.remember');
+        }
+
+        return self::$cache_remember;
+    } 
    
     
 

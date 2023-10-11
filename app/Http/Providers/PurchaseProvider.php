@@ -22,7 +22,7 @@ class PurchaseProvider extends Provider
 
     public function __construct()
     {
-        $this->username = auth()->user() ? auth()->user()->name : 'Test 111';
+        $this->username = auth()->user() ? auth()->user()->name : 'Not Available';
     }
 
     /**
@@ -31,7 +31,7 @@ class PurchaseProvider extends Provider
     public function index(Request $request)
     {
         Cache::forget('purchases');
-        $purchases = Cache::remember('purchases', 24 * 60 * 60, function () use($request) {
+        $purchases = Cache::remember('purchases', Purchase::getCacheRemember(), function () use($request) {
             if ($request->has('status') && $request->status) {
                 return Purchase::where('status', $request->status)->get();
             } else {
@@ -95,8 +95,8 @@ class PurchaseProvider extends Provider
                 'sid' => Purchase::generateId(),
                 'invoice_no' => $request->invoice_no,
                 'invoice_date' => $request->invoice_date,
-                'quantity' => $quantity,
-                'quantities' => json_encode($newDataStructure),
+                'quantity' => $this->calculateQuantity($request->quantities), //Sum of all quantities
+                'quantities' => json_encode($this->restructureQuantity($request->quantities)), // Initialize the new data structure
                 'message' => json_encode($messageArr),
                 'log_status_time' => $purchaseOrder->log_status_time,
             ]);
@@ -118,7 +118,7 @@ class PurchaseProvider extends Provider
         try{
 
             // Chat
-            if ($request->has('message') && $request->message) {
+            if ($request->has('message') && !empty($request->message)) {
 
                 $requestMsgArr = json_decode($request->message, true);
 
@@ -140,36 +140,17 @@ class PurchaseProvider extends Provider
 
             //To update quantities
 
-            if($request->has('quantities') && $request->quantities){
+            if($request->has('quantities') && !empty($request->quantities)){
 
-                $quantity = 0;
-                //$originalData = '[{"green1_S1":1313},{"green1_M1":1313},{"green1_L1":1313},{"blue1_S1":1313},{"blue1_M1":1313},{"blue1_L1":1313}]';
-
-                $quantities = json_decode($request->quantities, true);
-
-                foreach ($quantities as $qty) {
-                    $quantity += array_sum($qty);
-                }
-
-                // Initialize the new data structure
-                $newDataStructure = [];
-
-                // Extract numeric parts and create the new structure
-                foreach ($quantities as $item) {
-                    foreach ($item as $key => $value) {
-                        $newDataStructure[$key] = $value;
-                    }
-                }
-
-                $purchase->quantity = $quantity;
-                $purchase->quantities = json_encode($newDataStructure);
+                $purchase->quantity = $this->calculateQuantity($request->quantities); //Sum of all quantities
+                $purchase->quantities = json_encode($this->restructureQuantity($request->quantities)); // Initialize the new data structure
                 
                 $purchase->save();
             } 
 
             //To update status
 
-            if($request->has('status') && $request->status){
+            if($request->has('status') && !empty($request->status)){
 
 
                 if ($request->status == 'next' && $purchase->status != Purchase::FINAL_STATUS) 
@@ -241,7 +222,7 @@ class PurchaseProvider extends Provider
     public function show(Request $request, Purchase $purchase)
     {
         Cache::forget('purchase'.$purchase);
-        $purchase = Cache::remember('purchase'.$purchase, 24 * 60 * 60, function () use($purchase) {
+        $purchase = Cache::remember('purchase'.$purchase, Purchase::getCacheRemember(), function () use($purchase) {
             return $purchase;
         });
         return ApiResponse::success(new PurchaseResource($purchase));
@@ -253,7 +234,7 @@ class PurchaseProvider extends Provider
             return ApiResponse::error('Purchase does not exist.', 404);
         }
         Cache::forget('purchase_message' . $sid);
-        $purchase = Cache::remember('purchase_message' . $sid, 24 * 60 * 60, function () use($sid) {
+        $purchase = Cache::remember('purchase_message' . $sid, Purchase::getCacheRemember(), function () use($sid) {
             return Purchase::where('sid', $sid)->first();
         });
 
@@ -276,6 +257,45 @@ class PurchaseProvider extends Provider
 
         $purchase->save();
 
+    }
+
+     /**
+     * Sum of all quantities 
+     */
+    private function calculateQuantity($quantities){
+
+        $quantity = 0;
+
+        //$originalData = '[{"green1_S1":1313},{"green1_M1":1313},{"green1_L1":1313},{"blue1_S1":1313},{"blue1_M1":1313},{"blue1_L1":1313}]';
+
+        $quantities = json_decode($quantities, true);
+
+        foreach ($quantities as $qty) {
+            $quantity += array_sum($qty);
+        }
+
+        return $quantity;
+    }
+
+    /**
+     * Re structure of quantities of request 
+     */
+
+    private function restructureQuantity($quantities){
+        
+        $quantities = json_decode($quantities, true);
+
+        // Initialize the new data structure
+        $newDataStructure = [];
+
+        // Extract numeric parts and create the new structure
+        foreach ($quantities as $item) {
+            foreach ($item as $key => $value) {
+                $newDataStructure[$key] = $value;
+            }
+        }
+
+        return $newDataStructure;
     }
     
 }

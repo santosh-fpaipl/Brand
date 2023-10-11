@@ -42,15 +42,26 @@ class PurchaseOrder extends Model
     protected $cascadeDeletes = [];
     protected $CascadeSoftDeletesRestore = [];
     protected $dependency = [];
-
+    
+    
     public const FINAL_STATUS = 'po_completed';
     public const STATUS = ['po_issued','po_placed','po_completed','cancelled'];
-
+    
     public function getRouteKeyName()
     {
         return 'sid';
     }
+    
+    public static $cache_remember; 
+    
+    public static function getCacheRemember()
+    {
+        if (!isset(self::$cache_remember)) {
+            self::$cache_remember = config('api.cache.remember');
+        }
 
+        return self::$cache_remember;
+    }
 
     // Helper Functions
     
