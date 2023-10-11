@@ -159,7 +159,8 @@ return [
         /*
          * Package Service Providers...
          */
-
+        Fpaipl\Multiauth\MultiauthServiceProvider::class,
+        Fpaipl\Multiauth\Providers\FortifyServiceProvider::class,
         Fpaipl\Panel\PanelServiceProvider::class,
 
         /*
@@ -170,6 +171,7 @@ return [
         // App\Providers\BroadcastServiceProvider::class,
         App\Providers\EventServiceProvider::class,
         App\Providers\RouteServiceProvider::class,
+        Spatie\Permission\PermissionServiceProvider::class,
     ])->toArray(),
 
     /*
