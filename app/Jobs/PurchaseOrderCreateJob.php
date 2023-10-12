@@ -33,7 +33,8 @@ class PurchaseOrderCreateJob implements ShouldQueue
     {
         $this->data = $data;
 
-        //$this->user = auth()->user() ? auth()->user() : 'Not Available';
+        $this->user = auth()->user() ? auth()->user() : \App\Models\User::find(1);
+        
     }
 
     /**
@@ -87,8 +88,9 @@ class PurchaseOrderCreateJob implements ShouldQueue
             DB::commit();
         } catch (\Exception $e) {
             DB::rollBack();
-            //$user->notify(new PurchaseOrderCreateNotification());
-           // return ApiResponse::error($e->getMessage(), 404);
+            if(!empty($this->user)){
+                $this->user->notify(new PurchaseOrderCreateNotification($e->getMessage()));
+            }
         }
     }
 }

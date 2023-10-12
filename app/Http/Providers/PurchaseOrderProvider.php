@@ -184,9 +184,9 @@ class PurchaseOrderProvider extends Provider
      */
     private function calculateQuantity($quantities){
 
+        //$quantities = '[{"green1_S1":1313},{"green1_M1":1313},{"green1_L1":1313},{"blue1_S1":1313},{"blue1_M1":1313},{"blue1_L1":1313}]';
+        
         $quantity = 0;
-
-        //$originalData = '[{"green1_S1":1313},{"green1_M1":1313},{"green1_L1":1313},{"blue1_S1":1313},{"blue1_M1":1313},{"blue1_L1":1313}]';
 
         $quantities = json_decode($quantities, true);
 
@@ -202,6 +202,8 @@ class PurchaseOrderProvider extends Provider
      */
 
     private function restructureQuantity($quantities){
+
+       //$quantities = '[{"green1_S1":1313},{"green1_M1":1313},{"green1_L1":1313},{"blue1_S1":1313},{"blue1_M1":1313},{"blue1_L1":1313}]';
         
         $quantities = json_decode($quantities, true);
 

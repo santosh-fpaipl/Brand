@@ -7,16 +7,18 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-class PurchaseOrderCreateNotification extends Notification
+class PurchaseOrderCreateNotification extends Notification implements ShouldQueue
 {
     use Queueable;
+
+    private $message;
 
     /**
      * Create a new notification instance.
      */
-    public function __construct()
+    public function __construct($message)
     {
-        //
+        $this->message = $message;
     }
 
     /**
@@ -26,7 +28,8 @@ class PurchaseOrderCreateNotification extends Notification
      */
     public function via(object $notifiable): array
     {
-        return ['mail'];
+        //return ['mail'];
+        return ['database'];
     }
 
     /**
@@ -48,7 +51,7 @@ class PurchaseOrderCreateNotification extends Notification
     public function toArray(object $notifiable): array
     {
         return [
-            //
+            'Error' => $this->message,
         ];
     }
 }
