@@ -62,7 +62,9 @@ class Purchase extends Model
 
     public const FINAL_STATUS = 'completed';
 
-    public const STATUS = ['cutting','production','packing','ready','requested','dispatched','completed','cancelled'];
+    //public const STATUS = ['cutting','production','packing','ready','requested','dispatched','completed','cancelled'];
+
+    public const STATUS = ['cutting','production','ready','requested','dispatched','completed','cancelled'];
 
     public static $cache_remember; 
 
