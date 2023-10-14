@@ -18,7 +18,7 @@ class PurchaseOrderCreateRequest extends BaseRequest
     {
         return [
             'fabricator_sid' => ['required', 'string'],
-            'product_sid' => ['required', 'string'],
+            'product_sid' => ['required', 'string', 'exists:stocks,product_sid'],
             'quantities' => ['required', 'string'],
             'expected_at' => 'required|after_or_equal:today|date_format:Y-m-d',
         ];

@@ -100,6 +100,7 @@ class PurchaseOrderProvider extends Provider
                     $key = array_search($purchaseorder->status, PurchaseOrder::STATUS);
                     $purchaseorder->status = PurchaseOrder::STATUS[$key + 1];
                     $purchaseorder->save();
+                    
                     //To log the status timestamp
                     $this->updateLogStatusTime($purchaseorder);
 

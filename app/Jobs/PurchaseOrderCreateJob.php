@@ -48,36 +48,32 @@ class PurchaseOrderCreateJob implements ShouldQueue
             // purchaseorder can be placed of stock in draft
             // but not if it's not exits.
 
-            $stock = Stock::where('product_sid', $this->data['product_sid'])->where('active', 1)->exists();
+            // $stock = Stock::where('product_sid', $this->data['product_sid'])->where('active', 1)->exists();
             
-            if(!$stock){
-                throw new Exception('Stock does not exit.');
-            }
+            // if(!$stock){
+            //     throw new Exception('Stock does not exit.');
+            // }
 
             $fabricator = Http::get(env('FABRICATOR_APP').'/api/internal/fabricators/' . $this->data['fabricator_sid']);
-
             if($fabricator['status'] == config('api.error')){
-                throw new Exception('Fabricator does not exit.');
+                throw new Exception('#FB145 - Something went wrong, please try again later.');
             } 
 
             $product = Http::get(env('DS_APP').'/api/internal/products/' . $this->data['product_sid']);
-
-            
             if($product['status'] == config('api.error')){
-                throw new Exception('Product does not exit.');
+                throw new Exception('#FB145 - Something went wrong, please try again later.');
             } 
 
+            //Prepare responses
             $messageArr = [['title' => 'Purchase Order placed', 'body' => $this->data['message'], 'username' => $this->data['username'], 'time' => date('Y-m-d H:i:s')]];
-
             $logArr = [['status' => PurchaseOrder::STATUS[0], 'time' => date('Y-m-d H:i:s')]];
 
-
-            $po = PurchaseOrder::create([
+            PurchaseOrder::create([
                 'product_id' => $product['data']['id'],
-                'product_sid' => $this->data['product_sid'],
+                'product_sid' => $product['data']['sid'],
                 'fabricator_id' => $fabricator['data']['id'],
-                'fabricator_sid' => $this->data['fabricator_sid'],
-                'sid' => 'PO-' . time() . '-' . $product['data']['id'],
+                'fabricator_sid' => $fabricator['data']['sid'],
+                'sid' => 'DG-PO-' . time() . '' . $product['data']['id'],
                 'quantity' => $this->data['quantity'],
                 'quantities' => json_encode($this->data['newDataStructure']),
                 'expected_at' => $this->data['expected_at'],

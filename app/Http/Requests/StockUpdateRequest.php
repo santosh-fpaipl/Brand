@@ -16,7 +16,7 @@ class StockUpdateRequest extends BaseRequest
     public function rules(): array
     {
         return [
-            'status' => ['required','boolean']
+            'active' => ['required','in:true,false']
         ];
     }
 }

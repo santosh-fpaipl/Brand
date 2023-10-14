@@ -27,7 +27,7 @@ class StockProvider extends Provider
             $stocks = Stock::all();
             return ApiResponse::success(StockSkuResource::collection($stocks));
         } else {
-            $stocks = Stock::select('product_sid', DB::raw('SUM(quantity) as quantity'))->groupBy('product_sid')->where('active', 1)->get();
+            $stocks = Stock::select('product_sid', DB::raw('SUM(quantity) as quantity'),'active')->groupBy('product_sid','active')->get();
             return ApiResponse::success(StockResource::collection($stocks));
         }
     }
@@ -93,7 +93,12 @@ class StockProvider extends Provider
      */
     public function update(StockUpdateRequest $request, Stock $stock){
         try{
-            DB::table('stocks')->where('product_sid', $stock->product_sid)->update(['active'=> $request->status]);
+            if($request->active == 'true'){
+                $active = 1;
+            } else {
+                $active = 0;
+            }
+            DB::table('stocks')->where('product_sid', $stock->product_sid)->update(['active'=> $active]);
         } catch(\Exception $e){
             return ApiResponse::error($e->getMessage(), 404);
         }
@@ -107,7 +112,7 @@ class StockProvider extends Provider
      */
     public function show(Request $request, Stock $stock )
     {
-        $stock = Stock::groupBy('product_sid')->selectRaw('product_sid ,sum(quantity) as quantity')->where('product_sid', $stock->product_sid)->first();
+        $stock = Stock::groupBy('product_sid', 'active')->selectRaw('product_sid , active, sum(quantity) as quantity')->where('product_sid', $stock->product_sid)->first();
         return ApiResponse::success(new ShowProductResource($stock));
     }
 

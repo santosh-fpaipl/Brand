@@ -21,6 +21,7 @@ class ShowProductResource extends JsonResource
        
         return [
             'stock' => $this->quantity,
+            'active' => $this->active?true:false,
             'product' => new StockProductResource($product),
         ];
     }

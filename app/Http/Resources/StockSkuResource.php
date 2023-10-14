@@ -19,6 +19,7 @@ class StockSkuResource extends JsonResource
         return [
             'sku' => $this->sku,
             'quantity' => $this->quantity,
+            'active' => $this->active?true:false,
         ];
     }
 }
