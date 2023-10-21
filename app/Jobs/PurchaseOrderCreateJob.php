@@ -10,13 +10,15 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Http\Request;
+use Exception;
 
 use App\Models\PurchaseOrder;
 use App\Models\Stock;
 use App\Notifications\PurchaseOrderCreateNotification;
 use App\Http\Responses\ApiResponse;
-use Illuminate\Http\Request;
-use Exception;
+use App\Http\Fetchers\DsFetcher;
+use App\Http\Fetchers\FabricatorFetcher;
 
 class PurchaseOrderCreateJob implements ShouldQueue
 {
@@ -47,20 +49,21 @@ class PurchaseOrderCreateJob implements ShouldQueue
 
             // purchaseorder can be placed of stock in draft
             // but not if it's not exits.
-
-            // $stock = Stock::where('product_sid', $this->data['product_sid'])->where('active', 1)->exists();
             
-            // if(!$stock){
-            //     throw new Exception('Stock does not exit.');
-            // }
-
-            $fabricator = Http::get(env('FABRICATOR_APP').'/api/internal/fabricators/' . $this->data['fabricator_sid']);
-            if($fabricator['status'] == config('api.error')){
+            $fabricatorFetcherrObj = new FabricatorFetcher();
+            $params = $this->data['fabricator_sid'].'?'.$fabricatorFetcherrObj->api_secret();
+            $response = $fabricatorFetcherrObj->makeApiRequest('get', '/api/fabricators/', $params);
+            $fabricator = $response->data;
+            if ($response->status == config('api.error')) {
                 throw new Exception('#FB145 - Something went wrong, please try again later.');
-            } 
+            }
 
-            $product = Http::get(env('DS_APP').'/api/internal/products/' . $this->data['product_sid']);
-            if($product['status'] == config('api.error')){
+            
+            $dsFetcherObj = new DsFetcher();
+            $params = $this->data['product_sid'].'?'.$dsFetcherObj->api_secret();
+            $response = $dsFetcherObj->makeApiRequest('get', '/api/products/', $params);
+            $product = $response->data;
+            if($response->status == config('api.error')){
                 throw new Exception('#FB145 - Something went wrong, please try again later.');
             } 
 
@@ -69,11 +72,11 @@ class PurchaseOrderCreateJob implements ShouldQueue
             $logArr = [['status' => PurchaseOrder::STATUS[0], 'time' => date('Y-m-d H:i:s')]];
 
             PurchaseOrder::create([
-                'product_id' => $product['data']['id'],
-                'product_sid' => $product['data']['sid'],
-                'fabricator_id' => $fabricator['data']['id'],
-                'fabricator_sid' => $fabricator['data']['sid'],
-                'sid' => 'DG-PO-' . time() . '' . $product['data']['id'],
+                'product_id' => $product->id,
+                'product_sid' => $product->sid,
+                'fabricator_id' => $fabricator->id,
+                'fabricator_sid' => $fabricator->sid,
+                'sid' => 'DG-PO-' . time() . '' . $product->id,
                 'quantity' => $this->data['quantity'],
                 'quantities' => json_encode($this->data['newDataStructure']),
                 'expected_at' => $this->data['expected_at'],

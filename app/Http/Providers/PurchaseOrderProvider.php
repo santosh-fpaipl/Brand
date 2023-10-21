@@ -35,6 +35,7 @@ class PurchaseOrderProvider extends Provider
         if (env('APP_DEBUG')) {
             Cache::forget('purchaseorders');
         }
+       
         $purchaseorders = Cache::remember('purchaseorders', PurchaseOrder::getCacheRemember(), function () use($request) {
             if ($request->has('status') && $request->status) {
                return PurchaseOrder::where('status', $request->status)->get();
@@ -42,8 +43,17 @@ class PurchaseOrderProvider extends Provider
                 return PurchaseOrder::all();
             }
         });
+       
+        // viar = validInternalApiRequest
+        $viar = $this->reqHasApiSecret($request);
+        foreach ($purchaseorders as $purchaseorder) {
+            if($viar){
+                $purchaseorder->viar = true;
+            }
+        }   
 
         return ApiResponse::success(PurchaseOrderResource::collection($purchaseorders));
+       
     }
 
     /**
@@ -126,6 +136,12 @@ class PurchaseOrderProvider extends Provider
         } catch (\Exception $e) {
             return ApiResponse::error($e->getMessage(), 404);
         }
+
+        // viar = validInternalApiRequest
+        $viar = $this->reqHasApiSecret($request);
+        if($viar){
+            $purchaseorder->viar = true;
+        }
         return ApiResponse::success(new PurchaseOrderResource($purchaseorder));
     }
 
@@ -141,19 +157,31 @@ class PurchaseOrderProvider extends Provider
         $purchaseorder = Cache::remember('purchaseorder' . $purchaseorder, PurchaseOrder::getCacheRemember(), function () use ($purchaseorder) {
             return $purchaseorder;
         });
+
+        // viar = validInternalApiRequest
+        $viar = $this->reqHasApiSecret($request);
+        if($viar){
+            $purchaseorder->viar = true;
+        }
         return ApiResponse::success(new PurchaseOrderResource($purchaseorder));
     }
 
     /**
      * Return only messages for this po
      */
-    public function getPurchaseOrderMessage($sid)
+    public function getPurchaseOrderMessage(Request $request, $sid)
     {
         if(!PurchaseOrder::where('sid', $sid)->exists()){
             return ApiResponse::error('Invalid request', 404);
         }
       
         $purchaseorder = PurchaseOrder::where('sid', $sid)->first();
+
+        // viar = validInternalApiRequest
+        $viar = $this->reqHasApiSecret($request);
+        if($viar){
+            $purchaseorder->viar = true;
+        }
 
         return ApiResponse::success(new PurchaseOrderMessageResource($purchaseorder));
     }

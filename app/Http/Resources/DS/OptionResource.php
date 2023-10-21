@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Http\Resources;
+namespace App\Http\Resources\DS;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class ProductOptionResource extends JsonResource
+class OptionResource extends JsonResource
 {
     /**
      * Transform the resource into an array.
@@ -14,12 +14,13 @@ class ProductOptionResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-       //return parent::toArray($request);
-       return [
-            'sid' => $this->sid,
+        //return parent::toArray($request);
+
+        return [
+            'id' =>$this->id,
             'name' => $this->name,
+            'sid' => $this->sid,
             'image' => $this->image,
-            'images' => collect($this->image),
-       ];
+        ];
     }
 }

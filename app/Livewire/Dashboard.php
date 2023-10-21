@@ -9,7 +9,7 @@ class Dashboard extends Component
     public $title='hello11';
 
     public function mount(){
-        dump('111');
+       // dump('111');
     }
 
     public function save(){

@@ -14,12 +14,21 @@ class SupplierProvider extends Provider
     * Display a listing of the resource.
     */
 
-    public function index()
+    public function index(Request $request)
     {
         Cache::forget('suppliers');
         $suppliers = Cache::remember('suppliers', Supplier::getCacheRemember(), function () {
             return Supplier::with('user')->with('addresses')->get();
         });
+
+        // viar = validInternalApiRequest
+        $viar = $this->reqHasApiSecret($request);
+        foreach ($suppliers as $supplier) {
+            if($viar){
+                $supplier->viar = true;
+            }
+        } 
+
         return ApiResponse::success(SupplierResource::collection($suppliers));
     }
 

@@ -10,4 +10,13 @@ class Provider extends BaseProvider
 {
     use AuthorizesRequests, ValidatesRequests;
 
+    public function reqHasApiSecret($request){
+        $viar = false;
+        if($request->has('api_secret') && env('API_SECRET') == $request->get('api_secret') ){
+            $viar = true;
+        }
+        return $viar;
+    }
+
+
 }

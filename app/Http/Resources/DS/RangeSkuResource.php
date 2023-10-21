@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Http\Resources;
+namespace App\Http\Resources\DS;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class ProductRangeResource extends JsonResource
+class RangeSkuResource extends JsonResource
 {
     /**
      * Transform the resource into an array.
@@ -17,10 +17,11 @@ class ProductRangeResource extends JsonResource
         //return parent::toArray($request);
 
         return [
-            "sid" => $this->sid,
             "name" => $this->name,
-            "mrp" => $this->name,
+            "slug" => $this->slug,
+            "mrp" => $this->mrp,
             "price" => $this->price,
-       ];
+            "sid" => $this->sid,
+        ];
     }
 }

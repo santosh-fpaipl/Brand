@@ -6,6 +6,7 @@ use Illuminate\Foundation\Http\FormRequest;
 use App\Http\Requests\BaseRequest;
 use Illuminate\Validation\Validator;
 use Illuminate\Support\Facades\Http;
+use App\Http\Fetchers\DsFetcher;
 
 class StockRequest extends BaseRequest
 {
@@ -40,14 +41,12 @@ class StockRequest extends BaseRequest
 
     private function checkProductExistsInDesignStudioApp()
     {
-        $response = Http::get(env('DS_APP') . '/api/internal/check_product', [
-            'product_sid' => $this->input('product_sid'),
-        ]);
-        
-        if ($response->status() == 200 || $response['status'] == config('api.ok')) {
+        $dsFetcherObj = new DsFetcher();
+        $params = $this->input('product_sid').'?'.$dsFetcherObj->api_secret().'&&check=available';
+        $response = $dsFetcherObj->makeApiRequest('get', '/api/products/', $params);
+        if ($response->statusCode == 200 && $response->status == config('api.ok')) {
             return false;  // product exist
         }
-
         return true; // product doesn't exists
     }
 }

@@ -17,7 +17,7 @@ class PurchaseCreateRequest extends BaseRequest
     {
         return [
             'purchase_order_sid' => ['required', 'string','exists:purchase_orders,sid'],
-            //'quantities' => ['required', 'string'],
+            'quantities' => ['required', 'string'],
             'invoice_no' => ['required', 'string'],
             'invoice_date' => 'required|date_format:Y-m-d',
             'message' => ['required', 'string']

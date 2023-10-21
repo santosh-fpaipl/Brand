@@ -38,6 +38,15 @@ class PurchaseProvider extends Provider
                 return Purchase::get();
             }
         });
+
+        // viar = validInternalApiRequest
+        $viar = $this->reqHasApiSecret($request);
+        foreach ($purchases as $purchase) {
+            if($viar){
+                $purchase->viar = true;
+            }
+        }  
+
         return ApiResponse::success(PurchaseResource::collection($purchases));
     }
 
@@ -46,26 +55,6 @@ class PurchaseProvider extends Provider
      */
 
     public function store(PurchaseCreateRequest $request){
-        
-        $quantity = 0;
-
-        $quantities = '[{"green1_S1":1313},{"green1_M1":1313},{"green1_L1":1313},{"blue1_S1":1313},{"blue1_M1":1313},{"blue1_L1":1313}]';
-        
-        $quantities = json_decode($quantities, true);
-
-        foreach($quantities as $qty){
-            $quantity += array_sum($qty);
-        }
-
-        // Initialize the new data structure
-        $newDataStructure = [];
-
-        // Extract numeric parts and create the new structure
-        foreach ($quantities as $item) {
-            foreach ($item as $key => $value) {
-                $newDataStructure[$key] = $value;
-            }
-        }
 
         try{
             $purchase = '';
@@ -107,6 +96,13 @@ class PurchaseProvider extends Provider
         } catch(\Exception $e){
             return ApiResponse::error($e->getMessage(), 404);
         }
+
+        // viar = validInternalApiRequest
+        $viar = $this->reqHasApiSecret($request);
+        if($viar){
+            $purchase->viar = true;
+        }
+
         return ApiResponse::success(new PurchaseResource($purchase));
     }
 
@@ -213,6 +209,13 @@ class PurchaseProvider extends Provider
         } catch(\Exception $e){
             return ApiResponse::error($e->getMessage(), 404);
         }
+
+        // viar = validInternalApiRequest
+        $viar = $this->reqHasApiSecret($request);
+        if($viar){
+            $purchase->viar = true;
+        }
+
         return ApiResponse::success(new PurchaseResource($purchase));
     }
 
@@ -225,10 +228,17 @@ class PurchaseProvider extends Provider
         $purchase = Cache::remember('purchase'.$purchase, Purchase::getCacheRemember(), function () use($purchase) {
             return $purchase;
         });
+
+        // viar = validInternalApiRequest
+        $viar = $this->reqHasApiSecret($request);
+        if($viar){
+            $purchase->viar = true;
+        }
+
         return ApiResponse::success(new PurchaseResource($purchase));
     }
 
-    public function getPurchaseMessage($sid)
+    public function getPurchaseMessage(Request $request, $sid)
     {
         if(!Purchase::where('sid', $sid)->exists()){
             return ApiResponse::error('Purchase does not exist.', 404);
@@ -237,6 +247,12 @@ class PurchaseProvider extends Provider
         $purchase = Cache::remember('purchase_message' . $sid, Purchase::getCacheRemember(), function () use($sid) {
             return Purchase::where('sid', $sid)->first();
         });
+
+        // viar = validInternalApiRequest
+        $viar = $this->reqHasApiSecret($request);
+        if($viar){
+            $purchase->viar = true;
+        }
 
         return ApiResponse::success(new PurchaseMessageResource($purchase));
     }
@@ -266,7 +282,7 @@ class PurchaseProvider extends Provider
 
         $quantity = 0;
 
-        //$originalData = '[{"green1_S1":1313},{"green1_M1":1313},{"green1_L1":1313},{"blue1_S1":1313},{"blue1_M1":1313},{"blue1_L1":1313}]';
+        //$quantities = '[{"green1_S1":1313},{"green1_M1":1313},{"green1_L1":1313},{"blue1_S1":1313},{"blue1_M1":1313},{"blue1_L1":1313}]';
 
         $quantities = json_decode($quantities, true);
 
@@ -282,6 +298,8 @@ class PurchaseProvider extends Provider
      */
 
     private function restructureQuantity($quantities){
+
+        //$quantities = '[{"green1_S1":1313},{"green1_M1":1313},{"green1_L1":1313},{"blue1_S1":1313},{"blue1_M1":1313},{"blue1_L1":1313}]';
         
         $quantities = json_decode($quantities, true);
 

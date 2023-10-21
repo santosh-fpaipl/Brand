@@ -6,6 +6,8 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Validator;
 use Illuminate\Support\Facades\Http;
 use App\Http\Requests\BaseRequest;
+use App\Http\Fetchers\DsFetcher;
+use App\Http\Fetchers\FabricatorFetcher;
 
 class PurchaseOrderCreateRequest extends BaseRequest
 {
@@ -53,28 +55,24 @@ class PurchaseOrderCreateRequest extends BaseRequest
 
     private function checkFabricatorExistsInFabricatorApp()
     {
-        $response = Http::get(env('FABRICATOR_APP') . '/api/internal/check_fabricator', [
-            'fabricator_sid' => $this->input('fabricator_sid'),
-        ]);
-        
-        if ($response->status() == 200 || $response['status'] == config('api.ok')) {
-            return false;  // Fabricator exist
+        $fabricatorFetcherrObj = new FabricatorFetcher();
+        $params = $this->input('fabricator_sid').'?'.$fabricatorFetcherrObj->api_secret().'&&check=available';
+        $response = $fabricatorFetcherrObj->makeApiRequest('get', '/api/fabricators/', $params);
+        if ($response->statusCode == 200 && $response->status == config('api.ok')) {
+            return false;  // product exist
         }
-
-        return true; // Fabricator doesn't exists
+        return true; // product doesn't exists
     }
 
 
     private function checkProductExistsInDesignStudioApp()
     {
-        $response = Http::get(env('DS_APP') . '/api/internal/check_product', [
-            'product_sid' => $this->input('product_sid'),
-        ]);
-        
-        if ($response->status() == 200 || $response['status'] == config('api.ok')) {
+        $dsFetcherObj = new DsFetcher();
+        $params = $this->input('product_sid').'?'.$dsFetcherObj->api_secret().'&&check=available';
+        $response = $dsFetcherObj->makeApiRequest('get', '/api/products/', $params);
+        if ($response->statusCode == 200 && $response->status == config('api.ok')) {
             return false;  // product exist
         }
-
         return true; // product doesn't exists
     }
 }

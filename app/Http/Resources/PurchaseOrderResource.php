@@ -6,7 +6,8 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use App\Http\Resources\ProductOptionResource;
 use App\Http\Resources\ProductRangeResource;
-use App\Services\ProductRepository;
+
+use App\Http\Fetchers\DsFetcher;
 
 class PurchaseOrderResource extends JsonResource
 {
@@ -17,21 +18,25 @@ class PurchaseOrderResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        $product = ProductRepository::get($this->product_sid);
+        $dsFetcherObj = new DsFetcher();
+        $params = $this->product_sid.'?'.$dsFetcherObj->api_secret();
+        $response = $dsFetcherObj->makeApiRequest('get', '/api/products/', $params);
+        $product = $response->data;
+        
         return [
-            'id' => $this->id,
+            'id' => $this->viar ? $this->id : '',
             'sid' => $this->sid,
             'product_id' => $this->product_id,
-            'name' => $product['name'],
-            "tags" =>  $product['tags'],
+            'name' => $product->name,
+            "tags" =>  $product->tags,
             'quantity' => $this->quantity,
             'message' => json_decode($this->message),
             'created_at' => $this->created_at->format('Y-m-d'),
             'expected_at' => $this->expected_at,
             'fabricator_id' => $this->fabricator_id,
             'fabricator_sid' => $this->fabricator_sid,
-            'colors' => ProductOptionResource::collection($product['options']),
-            'sizes' => ProductRangeResource::collection($product['ranges']),
+            'colors' => ProductOptionResource::collection($product->options),
+            'sizes' => ProductRangeResource::collection($product->ranges),
             'quantities' => json_decode($this->quantities),
             'status' => $this->status,
             'log_status_time' => json_decode($this->log_status_time),

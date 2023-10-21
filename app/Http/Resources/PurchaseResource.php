@@ -4,7 +4,7 @@ namespace App\Http\Resources;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
-use App\Services\ProductRepository;
+use App\Http\Fetchers\DsFetcher;
 use Carbon\Carbon;
 
 class PurchaseResource extends JsonResource
@@ -17,7 +17,11 @@ class PurchaseResource extends JsonResource
     public function toArray(Request $request): array
     {
         //return parent::toArray($request);
-        $product = ProductRepository::get($this->product_sid);
+        $dsFetcherObj = new DsFetcher();
+        $params = $this->product_sid.'?'.$dsFetcherObj->api_secret();
+        $response = $dsFetcherObj->makeApiRequest('get', '/api/products/', $params);
+        $product = $response->data;
+
         return [
             "id" => $this->id,
             "sid" => $this->sid,
@@ -31,11 +35,11 @@ class PurchaseResource extends JsonResource
             ],
             "product" => [
                 'id' => $this->product_id,
-                'sid' => $product['sid'],
-                'name' => $product['name'],
-                "tags" =>  $product['tags'],
-                'colors' => ProductOptionResource::collection($product['options']),
-                'sizes' => ProductRangeResource::collection($product['ranges']),
+                'sid' => $product->sid,
+                'name' => $product->name,
+                "tags" =>  $product->tags,
+                'colors' => ProductOptionResource::collection($product->options),
+                'sizes' => ProductRangeResource::collection($product->ranges),
             ],
             "fabricator_id" => $this->fabricator_id,
             "invoice_no" => $this->invoice_no,

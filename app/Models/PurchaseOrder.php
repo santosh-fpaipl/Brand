@@ -13,6 +13,8 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Http;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
+use App\Http\Fetchers\FabricatorFetcher;
+use App\Http\Fetchers\StoreFetcher;
 
 class PurchaseOrder extends Model 
 {
@@ -70,12 +72,12 @@ class PurchaseOrder extends Model
      */
     public function fabricatorHasPurchaseFabric()
     {
-        $response = Http::get(env('FABRICATOR_APP').'/api/internal/haspurchase?po_sid='.$this->sid);
-        if ($response->successful()) {
-            $data = json_decode($response->body(), true);
-            return count($data['data'])?1:0;
+        $fabricatorFetcherrObj = new FabricatorFetcher();
+        $params = $this->sid.'?'.$fabricatorFetcherrObj->api_secret().'&&check=available';
+        $response = $fabricatorFetcherrObj->makeApiRequest('get', '/api/fabricators/', $params);
+        if ($response->statusCode == 200 && $response->status == config('api.ok')) {
+           return 1;
         } else {
-            //return 'Error: ' . $response->status();
             return 0;
         }
     }
@@ -85,14 +87,14 @@ class PurchaseOrder extends Model
      */
     public function monalHasSoldFabric()
     {
-        $response = Http::get(env('MONAL_APP').'/api/saleorder/'.$this->sid.'/F1');
-        if ($response->successful()) {
-            $data = json_decode($response->body(), true);
-            return count($data['data'])?1:0;
-        } else {
-            //return 'Error: ' . $response->status();
-            return 0;
-        }
+        $storeFetcherObj = new StoreFetcher();
+        $params = $this->sid.'?'.$storeFetcherObj->api_secret();
+        $response = $storeFetcherObj->makeApiRequest('get', '/api/saleorders/', $params);
+        if ($response->statusCode == 200 && $response->status == config('api.ok')) {
+            return 1;
+         } else {
+             return 0;
+         }
     }
 
     // Relationships

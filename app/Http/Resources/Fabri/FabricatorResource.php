@@ -1,11 +1,12 @@
 <?php
 
-namespace App\Http\Resources;
+namespace App\Http\Resources\Fabri;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use App\Http\Resources\Fabri\AddressResource;
 
-class ProductRangeResource extends JsonResource
+class FabricatorResource extends JsonResource
 {
     /**
      * Transform the resource into an array.
@@ -17,10 +18,12 @@ class ProductRangeResource extends JsonResource
         //return parent::toArray($request);
 
         return [
+            "id" => $this->id,
             "sid" => $this->sid,
             "name" => $this->name,
-            "mrp" => $this->name,
-            "price" => $this->price,
-       ];
+            "email" => $this->email,
+            "description" => $this->description,
+            "addresses" => AddressResource::collection($this->addresses),
+        ];
     }
 }

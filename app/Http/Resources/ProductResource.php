@@ -4,7 +4,6 @@ namespace App\Http\Resources;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
-use App\Services\ProductRepository;
 
 class ProductResource extends JsonResource
 {
@@ -17,18 +16,18 @@ class ProductResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            'name' => $this['name'],
-            'id' => $this['id'],
-            'sid' => $this['sid'],
-            'moq' => $this['moq'],
-            'image' => $this->getFirstImage($this['options']), // Implement this function in your model or here
-            'options' =>  collect($this['options'])->map(function ($option) {
+            'name' => $this->name,
+            'id' => $this->id,
+            'sid' => $this->sid,
+            'moq' => $this->moq,
+            'image' => $this->getFirstImage($this->options), // Implement this function in your model or here
+            'options' =>  collect($this->options)->map(function ($option) {
                 // return $option;
                 return [
-                    'sid' => $option['sid'],
-                    'name' => $option['name'],
-                    'image' => $option['image'],
-                    'images' => collect($option['image']),
+                    'sid' => $option->sid,
+                    'name' => $option->name,
+                    'image' => $option->image,
+                    'images' => collect($option->image),
                 ];
             }),
         ];
@@ -41,6 +40,6 @@ class ProductResource extends JsonResource
     private function getFirstImage($options): string
     {
         // Your implementation here
-        return collect($options)->first()['image'];
+        return collect($options)->first()->image;
     }
 }

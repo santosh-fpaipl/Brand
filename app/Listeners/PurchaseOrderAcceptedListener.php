@@ -5,6 +5,7 @@ namespace App\Listeners;
 use App\Events\PurchaseOrderAcceptedEvent;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Http;
+use App\Http\Fetchers\StoreFetcher;
 use App\Models\PurchaseOrder;
 
 class PurchaseOrderAcceptedListener
@@ -69,20 +70,20 @@ class PurchaseOrderAcceptedListener
      */
     public function handle(PurchaseOrderAcceptedEvent $event): void
     {
-        //Log::info($event->jobworkorder);
+        Log::info($event->purchaseorder);
 
-        $response = Http::post(env('MONAL_APP').'/api/saleorders', [
+        $storeFetcherObj = new StoreFetcher();
+        $params = '?'.$storeFetcherObj->api_secret();
+        $body = [
             'customer_id' => $event->purchaseorder->fabricator_id,
             'customer_sid' => $event->purchaseorder->fabricator_sid,
             'stock_id' => 1,
             'purchase_order_sid' => $event->purchaseorder->sid,
             'quantities' => $event->purchaseorder->quantities,
+        ];
+        $response = $storeFetcherObj->makeApiRequest('post', '/api/saleorders', $params, $body);
 
-        ]);
-
-        //Log::info($response);
-
-        if ($response->successful()) {
+        if ($response->statusCode == 200 && $response->status == config('api.ok')) {
 
             $event->purchaseorder->status = PurchaseOrder::FINAL_STATUS;
             $event->purchaseorder->save();

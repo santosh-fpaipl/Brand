@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use App\Http\Providers\Provider;
+use App\Http\Fetchers\DsFetcher;
 use App\Http\Responses\ApiResponse;
 use App\Models\Stock;
 use App\Http\Resources\StockResource;
@@ -25,11 +26,25 @@ class StockProvider extends Provider
         if($request->has('type') && $request->type == 'sku'){
             //To get stock sku wise
             $stocks = Stock::all();
-            return ApiResponse::success(StockSkuResource::collection($stocks));
         } else {
             $stocks = Stock::select('product_sid', DB::raw('SUM(quantity) as quantity'),'active')->groupBy('product_sid','active')->get();
+        }
+
+        // viar = validInternalApiRequest
+        $viar = $this->reqHasApiSecret($request);
+        foreach ($stocks as $stock) {
+            if($viar){
+                $stock->viar = true;
+            }
+        } 
+
+        if($request->has('type') && $request->type == 'sku'){
+            //To get stock sku wise
+            return ApiResponse::success(StockSkuResource::collection($stocks));
+        } else {
             return ApiResponse::success(StockResource::collection($stocks));
         }
+
     }
 
     /**
@@ -46,22 +61,25 @@ class StockProvider extends Provider
             
             // make an api call to ds to fetch the product along with options and ranges
 
-            $response = Http::get(env('DS_APP').'/api/internal/products/'.$request->product_sid);
+            $dsFetcherObj = new DsFetcher();
+            $params = $request->product_sid.'?'.$dsFetcherObj->api_secret();
+            $response = $dsFetcherObj->makeApiRequest('get', '/api/products/', $params);
+            $product = $response->data;
 
-            if ($response->successful()) {
-                $product = $response['data'];
+            if ($response->statusCode == 200 && $response->status == config('api.ok')) {
+                $product = $response->data;
             } else {
                throw new Exception('DS:Server Error, Try again later');
             }
 
-            $options = $product['options'];
-            $ranges = $product['ranges'];
+            $options = $product->options;
+            $ranges = $product->ranges;
 
             foreach($options as $option){
-                $product_option_id = $option['id'];
+                $product_option_id = $option->id;
                 foreach($ranges as $range){
-                    $product_range_id = $range['id'];
-                    $sku = $product['id']."-".$product_option_id."-".$product_range_id;
+                    $product_range_id = $range->id;
+                    $sku = $product->id."-".$product_option_id."-".$product_range_id;
                     $stock = Stock::where('sku', $sku)->withTrashed()->first();
                     if($stock){
                         if($stock->trashed()){
@@ -70,7 +88,7 @@ class StockProvider extends Provider
                     } else {
                         Stock::create([
                             'sku' => $sku,
-                            'product_id' => $product['id'],
+                            'product_id' => $product->id,
                             'product_sid' => $request->product_sid,
                             'product_option_id' => $product_option_id,
                             'product_range_id' => $product_range_id,
@@ -113,6 +131,13 @@ class StockProvider extends Provider
     public function show(Request $request, Stock $stock )
     {
         $stock = Stock::groupBy('product_sid', 'active')->selectRaw('product_sid , active, sum(quantity) as quantity')->where('product_sid', $stock->product_sid)->first();
+        
+        // viar = validInternalApiRequest
+        $viar = $this->reqHasApiSecret($request);
+        if($viar){
+            $stock->viar = true;
+        }
+
         return ApiResponse::success(new ShowProductResource($stock));
     }
 

@@ -8,6 +8,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Cache;
+use App\Http\Fetchers\DsFetcher;
 use App\Models\Stock;
 
 class PurchaseReceivedListener
@@ -29,17 +30,20 @@ class PurchaseReceivedListener
 
         Cache::forget('product');
         $product = Cache::remember('product', 24 * 60 * 60, function () use($event) {
-            $respons = Http::get(env('DS_APP').'/api/internal/products/'.$event->purchase->product_sid); 
-            return $respons->json(); // Convert the JSON response to an array
+            $dsFetcherObj = new DsFetcher();
+            $params = $event->purchase->product_sid.'?'.$dsFetcherObj->api_secret();
+            $response = $dsFetcherObj->makeApiRequest('get', '/api/products/', $params);
+           return $response->data;
+
         });
         
-        $product_id = $product['data']['id'];
+        $product_id = $product->id;
 
         foreach(json_decode($event->purchase->quantities, true) as $option_size => $quantity){
 
             $option_size_arr = explode("_", $option_size);
-            $option_id = $this->searchForSid($option_size_arr[0], $product['data']['options']);
-            $size_id = $this->searchForSid($option_size_arr[1], $product['data']['ranges']);
+            $option_id = $this->searchForSid($option_size_arr[0], $product->options);
+            $size_id = $this->searchForSid($option_size_arr[1], $product->ranges);
            
             if(!is_null($option_id) && !is_null($option_id)){
 
@@ -54,7 +58,7 @@ class PurchaseReceivedListener
                         'sku' => $sku,
                         'quantity' => $quantity,
                         'product_id' => $product_id,
-                        'product_sid' => $product['sid'],
+                        'product_sid' => $product->sid,
                         'product_option_id' => $option_id,
                         'product_range_id' => $size_id,
                     ]);
@@ -66,10 +70,10 @@ class PurchaseReceivedListener
        
     }
 
-    function searchForSid($sid, $array) {
-        foreach ($array as $key => $val) {
-            if ($val['sid'] === $sid) {
-                return $val['id'];
+    function searchForSid($sid, $objs) {
+        foreach ($objs as $key => $val) {
+            if ($val->sid === $sid) {
+                return $val->id;
             }
         }
         return null;

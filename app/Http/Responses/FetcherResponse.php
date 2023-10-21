@@ -2,7 +2,7 @@
 namespace App\Http\Responses;
 use Illuminate\Http\JsonResponse;
 
-class ApiResponse{
+class FetcherResponse{
 
     public static function success($data, $message = null){
         $response =[
