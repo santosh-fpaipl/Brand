@@ -15,6 +15,7 @@ use App\Models\PurchaseOrder;
 use Illuminate\Support\Facades\Http;
 use Exception;
 use Carbon\Carbon;
+use App\Events\ReloadDataEvent;
 
 class PurchaseProvider extends Provider
 {
@@ -203,6 +204,17 @@ class PurchaseProvider extends Provider
                if($purchase->status == Purchase::FINAL_STATUS){
                     PurchaseReceivedEvent::dispatch($purchase);
                }
+
+                if($purchase->status == Purchase::STATUS[0]
+                    || $purchase->status == Purchase::STATUS[2]
+                    || $purchase->status == Purchase::STATUS[3]
+                    || $purchase->status == Purchase::STATUS[4]
+                    || $purchase->status == Purchase::STATUS[5]
+                ){
+                    //To send the message to pusher
+                        ReloadDataEvent::dispatch(env('PUSHER_MESSAGE'));
+                    //End of pusher
+                }
               
             } 
 

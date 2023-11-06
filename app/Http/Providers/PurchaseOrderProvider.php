@@ -38,9 +38,9 @@ class PurchaseOrderProvider extends Provider
        
         $purchaseorders = Cache::remember('purchaseorders', PurchaseOrder::getCacheRemember(), function () use($request) {
             if ($request->has('status') && $request->status) {
-               return PurchaseOrder::where('status', $request->status)->get();
+               return PurchaseOrder::where('status', $request->status)->orderBy('created_at', 'desc')->take(5)->get();
             } else {
-                return PurchaseOrder::all();
+                return PurchaseOrder::orderBy('created_at', 'desc')->get(); // take(5)->
             }
         });
        

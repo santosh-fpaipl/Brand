@@ -73,8 +73,8 @@ class PurchaseOrder extends Model
     public function fabricatorHasPurchaseFabric()
     {
         $fabricatorFetcherrObj = new FabricatorFetcher();
-        $params = $this->sid.'?'.$fabricatorFetcherrObj->api_secret().'&&check=available';
-        $response = $fabricatorFetcherrObj->makeApiRequest('get', '/api/fabricators/', $params);
+        $params = '?brandpo_sid='.$this->sid.'&&'.$fabricatorFetcherrObj->api_secret();
+        $response = $fabricatorFetcherrObj->makeApiRequest('get', '/api/purchase/poexist', $params);
         if ($response->statusCode == 200 && $response->status == config('api.ok')) {
            return 1;
         } else {

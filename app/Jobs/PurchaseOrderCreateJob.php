@@ -19,6 +19,7 @@ use App\Notifications\PurchaseOrderCreateNotification;
 use App\Http\Responses\ApiResponse;
 use App\Http\Fetchers\DsFetcher;
 use App\Http\Fetchers\FabricatorFetcher;
+use App\Events\ReloadDataEvent;
 
 class PurchaseOrderCreateJob implements ShouldQueue
 {
@@ -83,7 +84,11 @@ class PurchaseOrderCreateJob implements ShouldQueue
                 'message' => json_encode($messageArr),
                 'log_status_time' => json_encode($logArr),
             ]);
-            
+
+            //To send the message to pusher
+                ReloadDataEvent::dispatch(env('PUSHER_MESSAGE'));
+            //End of pusher
+
             DB::commit();
         } catch (\Exception $e) {
             DB::rollBack();
