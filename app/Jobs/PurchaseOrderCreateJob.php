@@ -11,6 +11,7 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Exception;
 
 use App\Models\PurchaseOrder;
@@ -52,8 +53,8 @@ class PurchaseOrderCreateJob implements ShouldQueue
             // but not if it's not exits.
             
             $fabricatorFetcherrObj = new FabricatorFetcher();
-            $params = $this->data['fabricator_sid'].'?'.$fabricatorFetcherrObj->api_secret();
-            $response = $fabricatorFetcherrObj->makeApiRequest('get', '/api/fabricators/', $params);
+            $params = '?'.$fabricatorFetcherrObj->api_secret();
+            $response = $fabricatorFetcherrObj->makeApiRequest('get', '/api/fabricators/'.$this->data['fabricator_sid'], $params);
             $fabricator = $response->data;
             if ($response->status == config('api.error')) {
                 throw new Exception('#FB145 - Something went wrong, please try again later.');
@@ -61,8 +62,8 @@ class PurchaseOrderCreateJob implements ShouldQueue
 
             
             $dsFetcherObj = new DsFetcher();
-            $params = $this->data['product_sid'].'?'.$dsFetcherObj->api_secret();
-            $response = $dsFetcherObj->makeApiRequest('get', '/api/products/', $params);
+            $params = '?'.$dsFetcherObj->api_secret();
+            $response = $dsFetcherObj->makeApiRequest('get', '/api/products/'.$this->data['product_sid'], $params);
             $product = $response->data;
             if($response->status == config('api.error')){
                 throw new Exception('#FB145 - Something went wrong, please try again later.');
@@ -86,12 +87,13 @@ class PurchaseOrderCreateJob implements ShouldQueue
             ]);
 
             //To send the message to pusher
-                ReloadDataEvent::dispatch(env('PUSHER_MESSAGE'));
+                //ReloadDataEvent::dispatch(env('PUSHER_MESSAGE'));
             //End of pusher
 
             DB::commit();
         } catch (\Exception $e) {
             DB::rollBack();
+            Log::info($e);
             if(!empty($this->user)){
                 $this->user->notify(new PurchaseOrderCreateNotification($e->getMessage()));
             }

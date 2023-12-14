@@ -46,8 +46,8 @@ class PurchaseOrder extends Model
     protected $dependency = [];
     
     
-    public const FINAL_STATUS = 'po_completed';
-    public const STATUS = ['po_issued','po_placed','po_completed','cancelled'];
+    public const FINAL_STATUS = 'complete';
+    public const STATUS = ['draft','issued','completed','cancelled'];
     
     public function getRouteKeyName()
     {

@@ -17,6 +17,9 @@ use App\Listeners\PurchaseOrderAcceptedListener;
 use App\Events\PurchaseReceivedEvent;
 use App\Listeners\PurchaseReceivedListener;
 
+use App\Models\PurchaseOrder;
+use App\Observers\PurchaseOrderObserver;
+
 class EventServiceProvider extends ServiceProvider
 {
     /**
@@ -46,6 +49,7 @@ class EventServiceProvider extends ServiceProvider
     public function boot(): void
     {
         //
+        PurchaseOrder::observe(PurchaseOrderObserver::class);
     }
 
     /**

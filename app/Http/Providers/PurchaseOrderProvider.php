@@ -40,7 +40,7 @@ class PurchaseOrderProvider extends Provider
             if ($request->has('status') && $request->status) {
                return PurchaseOrder::where('status', $request->status)->orderBy('created_at', 'desc')->take(5)->get();
             } else {
-                return PurchaseOrder::orderBy('created_at', 'desc')->get(); // take(5)->
+                return PurchaseOrder::orderBy('created_at', 'desc')->take(5)->get(); // take(5)->
             }
         });
        
@@ -104,8 +104,10 @@ class PurchaseOrderProvider extends Provider
 
                 $purchaseorder->save();
             } else if ($request->has('status') && !empty($request->status)) {
-                if ($request->status == 'next' && $purchaseorder->status == PurchaseOrder::STATUS[0]) {
+                
+                //if ($request->status == 'next' && $purchaseorder->status == PurchaseOrder::STATUS[0]) {
 
+                if ($request->status == 'next' && $purchaseorder->status != PurchaseOrder::FINAL_STATUS) {
                     // assigning next status
                     $key = array_search($purchaseorder->status, PurchaseOrder::STATUS);
                     $purchaseorder->status = PurchaseOrder::STATUS[$key + 1];
@@ -114,11 +116,11 @@ class PurchaseOrderProvider extends Provider
                     //To log the status timestamp
                     $this->updateLogStatusTime($purchaseorder);
 
-                    if ($purchaseorder->status == PurchaseOrder::STATUS[1]) {
-                        PurchaseOrderAcceptedEvent::dispatch($purchaseorder);
-                        //To log the status timestamp
-                        $this->updateLogStatusTime($purchaseorder);
-                    }
+                    // if ($purchaseorder->status == PurchaseOrder::STATUS[1]) {
+                    //     PurchaseOrderAcceptedEvent::dispatch($purchaseorder);
+                    //     //To log the status timestamp
+                    //     $this->updateLogStatusTime($purchaseorder);
+                    // }
 
                 } else if ($request->status == 'cancelled') {
                     $purchaseorder->status = $request->status;

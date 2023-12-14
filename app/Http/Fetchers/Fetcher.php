@@ -5,6 +5,7 @@ namespace App\Http\Fetchers;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Foundation\Validation\ValidatesRequests;
 use Illuminate\Routing\Controller as BaseFetcher;
+use Illuminate\Support\Facades\Cache;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Exception\ConnectException;
 use Exception;
@@ -27,6 +28,14 @@ class Fetcher extends BaseFetcher
 
     public function makeApiRequest($method, $endpoint, $params = null, $body = null, $debug = false)
     {
+        $cacheKey = 'api_request_'.md5($method.$endpoint.$params.json_encode($body));
+        $cacheDuration = config('api.cache.duration', 60); // Default to 60 minutes, or get from config
+
+        // Check if the response is already in the cache
+        if ($cachedResponse = Cache::get($cacheKey)) {
+            return $cachedResponse;
+        }
+
         try {
             // Calling the API for data
             if(strtolower($method) == 'get'){
@@ -46,7 +55,9 @@ class Fetcher extends BaseFetcher
             // Process the response data based on the status code and body
             if ($statusCode === 200) {
                 // Successful response, sent back for processing and handling    
-                $data->statusCode = $statusCode;          
+                $data->statusCode = $statusCode;    
+                // Cache the response for future requests
+                Cache::put($cacheKey, $data, $cacheDuration);      
                 return $data;
             } else {
                 throw new Exception('Server Error, please try again after some time.');

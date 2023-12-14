@@ -33,8 +33,8 @@ class DsFetcher extends Fetcher
 
     public function showProduct(Request $request, $sid)
     {
-        $params = $sid.'?'.$this->api_secret().'&&check='.$request->check;
-        $response = $this->makeApiRequest('get', '/api/products/', $params);
+        $params ='?'.$this->api_secret().'&&check='.$request->check;
+        $response = $this->makeApiRequest('get', '/api/products/'.$sid, $params);
         if($response->status == config('api.error')){
             return ApiResponse::error($response->message, $response->statusCode); 
         } else {
@@ -56,8 +56,8 @@ class DsFetcher extends Fetcher
     }
 
     public function showProductSku($sku){
-        $params = $sku.'?'.$this->api_secret();
-        $response = $this->makeApiRequest('get', '/api/product_skus/', $params);
+        $params = '?'.$this->api_secret();
+        $response = $this->makeApiRequest('get', '/api/product_skus/'.$sku, $params);
         if($response->status == config('api.error')){
             return ApiResponse::error($response->message, $response->statusCode); 
         } else {

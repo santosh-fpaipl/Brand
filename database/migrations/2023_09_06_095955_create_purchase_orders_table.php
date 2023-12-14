@@ -28,8 +28,8 @@ return new class extends Migration
             $table->date('expected_at');
             $table->json('log_status_time')->nullable();
             
-            // po_issued -> po_placed -> po_completed, cancelled
-            $table->string('status')->default('po_issued'); 
+            // draft -> issued -> completed, cancelled
+            $table->string('status')->default('draft'); 
             
             $table->timestamps();
             $table->softDeletes();

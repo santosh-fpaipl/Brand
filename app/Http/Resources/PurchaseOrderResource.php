@@ -3,6 +3,7 @@
 namespace App\Http\Resources;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Http\Resources\Json\JsonResource;
 use App\Http\Resources\ProductOptionResource;
 use App\Http\Resources\ProductRangeResource;
@@ -19,8 +20,8 @@ class PurchaseOrderResource extends JsonResource
     public function toArray(Request $request): array
     {
         $dsFetcherObj = new DsFetcher();
-        $params = $this->product_sid.'?'.$dsFetcherObj->api_secret();
-        $response = $dsFetcherObj->makeApiRequest('get', '/api/products/', $params);
+        $params = '?'.$dsFetcherObj->api_secret();
+        $response = $dsFetcherObj->makeApiRequest('get', '/api/products/'.$this->product_sid, $params);
         $product = $response->data;
         
         return [

@@ -82,7 +82,7 @@ class PurchaseOrderAcceptedListener
             'quantities' => $event->purchaseorder->quantities,
         ];
         $response = $storeFetcherObj->makeApiRequest('post', '/api/saleorders', $params, $body);
-
+        Log::info($response);
         if ($response->statusCode == 200 && $response->status == config('api.ok')) {
 
             $event->purchaseorder->status = PurchaseOrder::FINAL_STATUS;

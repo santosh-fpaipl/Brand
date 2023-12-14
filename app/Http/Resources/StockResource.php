@@ -20,8 +20,8 @@ class StockResource extends JsonResource
         //return parent::toArray($request);
 
         $dsFetcherObj = new DsFetcher();
-        $params = $this->product_sid.'?'.$dsFetcherObj->api_secret();
-        $response = $dsFetcherObj->makeApiRequest('get', '/api/products/', $params);
+        $params = '?'.$dsFetcherObj->api_secret();
+        $response = $dsFetcherObj->makeApiRequest('get', '/api/products/'.$this->product_sid, $params);
         $product = $response->data;
        
         return [

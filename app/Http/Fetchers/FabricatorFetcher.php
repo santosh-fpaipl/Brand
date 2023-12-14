@@ -33,8 +33,8 @@ class FabricatorFetcher extends Fetcher
      */
     public function showFabricator(Request $request, $sid)
     {
-        $params = $sid.'?'.$this->api_secret().'&&check='.$request->check;
-        $response = $this->makeApiRequest('get', '/api/fabricators/', $params);
+        $params = '?'.$this->api_secret().'&&check='.$request->check;
+        $response = $this->makeApiRequest('get', '/api/fabricators/'.$sid, $params);
         if($response->status == config('api.error')){
             return ApiResponse::error($response->message, $response->statusCode); 
         } else {
@@ -65,8 +65,8 @@ class FabricatorFetcher extends Fetcher
      */
     public function showPurchase(Request $request, $sid)
     {
-        $params = $sid.'?'.$this->api_secret().'&&check='.$request->check;
-        $response = $this->makeApiRequest('get', '/api/purchases/', $params);
+        $params = '?'.$this->api_secret().'&&check='.$request->check;
+        $response = $this->makeApiRequest('get', '/api/purchases/'.$sid, $params);
         if($response->status == config('api.error')){
             return ApiResponse::error($response->message, $response->statusCode); 
         } else {
