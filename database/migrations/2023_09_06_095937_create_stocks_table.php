@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         /**
-         * Finished Goods
+         * Product Catelog (Using DS Api for related data using product_sid)
          */
         Schema::create('stocks', function (Blueprint $table) {
             $table->id();
@@ -27,13 +27,25 @@ return new class extends Migration
             $table->string('product_sid')->nullable(); // product sid 
             $table->unsignedBigInteger('product_id')->nullable(); // product
             $table->unsignedBigInteger('product_option_id')->nullable(); // product color
-            $table->unsignedBigInteger('product_range_id')->nullable(); // product size
+            //$table->unsignedBigInteger('product_range_id')->nullable(); // product size
 
             // For ecom app
             $table->boolean('active')->default(true); // enable/disable this stock
             $table->text('note')->nullable(); // remarks for dead stock
             $table->timestamps();
             $table->softDeletes();
+        });
+
+        Schema::create('ledgers', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('product_id'); // dsa app
+            $table->string('product_sid'); // dsa app
+            $table->unsignedBigInteger('fabricator_id'); // fabricator app
+            $table->string('fabricator_sid');// fabricator app
+            $table->unique(['product_id', 'fabricator_id']);
+            $table->unsignedBigInteger('balance'); // Total(order-demand) 
+            $table->unsignedBigInteger('demandable_qty'); // Total(ready-demand) 
+            $table->timestamps();
         });
     }
 

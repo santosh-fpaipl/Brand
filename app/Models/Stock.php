@@ -29,7 +29,7 @@ class Stock extends Model
         'product_id',
         'product_sid',
         'product_option_id',
-        'product_range_id',
+        'quantity',
         'note'
     ];
     
@@ -69,6 +69,9 @@ class Stock extends Model
                     'id', 
                     'sku', 
                     'quantity',
+                    'product_sid',
+                    'product_id',
+                    'product_option_id',
                     'active',
                     'note',
                     'created_at', 

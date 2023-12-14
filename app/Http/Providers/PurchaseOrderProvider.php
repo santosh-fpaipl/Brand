@@ -62,9 +62,20 @@ class PurchaseOrderProvider extends Provider
 
     public function store(PurchaseOrderCreateRequest $request)
     {
+        // $ledger = Ledger::findOrUpdate(
+        //  [
+        //        'product_id' => $request->product_id
+        //        'fab_id', $re->fab_id
+        // ],
+            // [
+
+            // ]
+        // );
+
         //Issue queued job for creating purchase order
         $purchase_order_data = [
             'product_sid' => $request->product_sid,
+            'ledger_id' => $ledger->id,
             'fabricator_sid' => $request->fabricator_sid,
             'message' => $request->message,
             'username' => $this->username,

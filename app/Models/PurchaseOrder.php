@@ -28,14 +28,9 @@ class PurchaseOrder extends Model
         ManageTag;
 
     protected $fillable = [
-        'product_id',
-        'product_sid', 
-        'fabricator_id',
-        'fabricator_sid',
         'sid',
+        'ledger',
         'quantity',
-        'quantities',
-        'message',
         'expected_at',
         'log_status_time',
         'status',
@@ -47,7 +42,7 @@ class PurchaseOrder extends Model
     
     
     public const FINAL_STATUS = 'complete';
-    public const STATUS = ['draft','issued','completed','cancelled'];
+    public const STATUS = ['issued','accepted','cancelled'];
     
     public function getRouteKeyName()
     {
@@ -111,9 +106,8 @@ class PurchaseOrder extends Model
             ->logOnly([
                     'id', 
                     'sid',
+                    'ledger',
                     'quantity',
-                    'quantities',
-                    'message',
                     'expected_at',
                     'log_status_time',
                     'status',

@@ -78,8 +78,7 @@ class StockProvider extends Provider
             foreach($options as $option){
                 $product_option_id = $option->id;
                 foreach($ranges as $range){
-                    $product_range_id = $range->id;
-                    $sku = $product->id."-".$product_option_id."-".$product_range_id;
+                    $sku = $product->id."-".$product_option_id;
                     $stock = Stock::where('sku', $sku)->withTrashed()->first();
                     if($stock){
                         if($stock->trashed()){
@@ -91,7 +90,6 @@ class StockProvider extends Provider
                             'product_id' => $product->id,
                             'product_sid' => $request->product_sid,
                             'product_option_id' => $product_option_id,
-                            'product_range_id' => $product_range_id,
                         ]);
                     }
                 }

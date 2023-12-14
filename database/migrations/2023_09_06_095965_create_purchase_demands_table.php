@@ -10,8 +10,8 @@ return new class extends Migration
      * Run the migrations.
      */
     public function up(): void
-    {        
-        Schema::create('purchase_orders', function (Blueprint $table) {
+    {
+        Schema::create('purchase_demands', function (Blueprint $table) {
             $table->id();
             $table->string('sid')->unique();
             $table->foreignId('ledger')->constrained();
@@ -24,15 +24,13 @@ return new class extends Migration
             $table->softDeletes();
         });
 
-        Schema::create('purchase_order_items', function (Blueprint $table) {
+        Schema::create('purchase_demand_items', function (Blueprint $table) {
             $table->id();
             $table->foreignId('stock_id')->constrained(); // each sku
-            $table->foreignId('purchase_order_id')->constrained();
+            $table->foreignId('purchase_demand_id')->constrained();
             $table->integer('quantity')->default(0); // each quantity
             $table->timestamps();
         });
-
-        
     }
 
     /**
@@ -40,8 +38,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('ledgers');
-        Schema::dropIfExists('purchase_order_items');
-        Schema::dropIfExists('purchase_orders');
+        Schema::dropIfExists('purchase_demand_items');
+        Schema::dropIfExists('purchase_demands');
     }
 };
