@@ -1,10 +1,7 @@
 <?php
 namespace App\Http\Providers;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Http;
 use App\Http\Providers\Provider;
 use App\Http\Fetchers\DsFetcher;
 use App\Http\Responses\ApiResponse;
@@ -77,8 +74,11 @@ class StockProvider extends Provider
 
             foreach($options as $option){
                 $product_option_id = $option->id;
+                $product_option_sid = $option->sid;
                 foreach($ranges as $range){
-                    $sku = $product->id."-".$product_option_id;
+                    $product_range_id = $range->id;
+                    $product_range_sid = $range->sid;
+                    $sku = $product->id."-".$product_option_id."-".$product_range_id;
                     $stock = Stock::where('sku', $sku)->withTrashed()->first();
                     if($stock){
                         if($stock->trashed()){
@@ -90,6 +90,9 @@ class StockProvider extends Provider
                             'product_id' => $product->id,
                             'product_sid' => $request->product_sid,
                             'product_option_id' => $product_option_id,
+                            'product_option_sid' => $product_option_sid,
+                            'product_range_id' => $product_range_id,
+                            'product_range_sid' => $product_range_sid,
                         ]);
                     }
                 }

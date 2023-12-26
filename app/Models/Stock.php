@@ -12,6 +12,9 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
+use App\Models\OrderItem;
+use App\Models\ReadyItem;
+use App\Models\DemandItem;
 
 class Stock extends Model 
 {
@@ -29,6 +32,9 @@ class Stock extends Model
         'product_id',
         'product_sid',
         'product_option_id',
+        'product_option_sid',
+        'product_range_id',
+        'product_range_sid',
         'quantity',
         'note'
     ];
@@ -58,7 +64,17 @@ class Stock extends Model
 
     // Relationships
     
-    
+    public function orderItems(){
+        return $this->hasMany(OrderItem::class);
+    }
+
+    public function readyItems(){
+        return $this->hasMany(ReadyItem::class);
+    }
+
+    public function demandItems(){
+        return $this->hasMany(DemandItem::class);
+    }
 
     // Logging
 
@@ -68,11 +84,13 @@ class Stock extends Model
             ->logOnly([
                     'id', 
                     'sku', 
-                    'quantity',
-                    'product_sid',
                     'product_id',
+                    'product_sid',
                     'product_option_id',
-                    'active',
+                    'product_option_sid',
+                    'product_range_id',
+                    'product_range_sid',
+                    'quantity',
                     'note',
                     'created_at', 
                     'updated_at', 

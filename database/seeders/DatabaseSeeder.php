@@ -8,6 +8,7 @@ use App\Models\Supplier;
 use Illuminate\Database\Seeder;
 use Database\Seeders\StockSeeder;
 use Database\Seeders\SupplierSeeder;
+use Database\Seeders\UserSeeder;
 
 class DatabaseSeeder extends Seeder
 {
@@ -18,11 +19,13 @@ class DatabaseSeeder extends Seeder
     {
       //\App\Models\User::factory(10)->create();
 
-      $this->call(SupplierSeeder::class);
+      // $this->call(SupplierSeeder::class);
 
-      $this->call(StockSeeder::class);
+      // $this->call(StockSeeder::class);
 
-      $this->call(JobWorkOrderSeeder::class);
+      // $this->call(JobWorkOrderSeeder::class);
+
+      $this->call(UserSeeder::class);
 
     }
 }

@@ -14,6 +14,13 @@ use Fpaipl\Panel\Traits\ManageModel;
 use Spatie\Permission\Traits\HasRoles;
 use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Activitylog\LogOptions;
+use Illuminate\Database\Eloquent\Relations\HasOne;
+use App\Models\Party;
+use App\Models\Order;
+use App\Models\Ready;
+use App\Models\Demand;
+use App\Models\LedgerAdjustment;
+use App\Models\Chat;
 
 class User extends Authenticatable implements MustVerifyEmail 
 {
@@ -62,6 +69,20 @@ class User extends Authenticatable implements MustVerifyEmail
         'password' => 'hashed',
     ];
 
+    //For Cache remember time
+    public static $cache_remember; 
+    
+    public static function getCacheRemember()
+    {
+        if (!isset(self::$cache_remember)) {
+            self::$cache_remember = config('api.cache.remember');
+        }
+
+        return self::$cache_remember;
+    }
+
+    //End of cache remember time
+
     protected $cascadeDeletes = ['profile'];
 
     protected $CascadeSoftDeletesRestore = ['profileWithTrashed'];
@@ -73,8 +94,56 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->profile();
     }
 
+    //Helper functions
+
+    public function isManager(){
+
+        return auth()->user()->hasRole('manager');
+    }
+
+    public function isStaff(){
+
+        return auth()->user()->hasRole('staff');
+    }
+    public function isFabricator(){
+
+        return auth()->user()->hasRole('fabricator');
+    }
+
+
+    // public function canCreate(){
+
+    //     return auth()->user()->hasRole(['staff', 'manager']);
+    // }
+
     //Relationship
 
+    public function party(): HasOne
+    {
+        return $this->hasOne(Party::class);
+    }
+
+    public function orders()
+    {
+        return $this->hasMany(Order::class);
+    }
+
+    public function readies()
+    {
+        return $this->hasMany(Ready::class);
+    }
+
+    public function demands()
+    {
+        return $this->hasMany(Demand::class);
+    }
+
+    public function chats()
+    {
+        return $this->hasMany(Chat::class);
+    }
+
+    
     public function profile()
     {
         return $this->hasOne(Profile::class, 'user_id');
@@ -82,6 +151,10 @@ class User extends Authenticatable implements MustVerifyEmail
 
     public function addresses(){
         return $this->hasMany(Address::class);
+    }
+
+    public function ledgerAdjustments(){
+        return $this->hasMany(LedgerAdjustment::class);
     }
 
     // Logging

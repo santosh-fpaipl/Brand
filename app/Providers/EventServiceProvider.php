@@ -11,14 +11,7 @@ use Illuminate\Auth\Events\Verified;
 use App\Listeners\SendWelcomeEmail;
 use App\Listeners\SetUpNewUserAccount;
 
-use App\Events\PurchaseOrderAcceptedEvent;
-use App\Listeners\PurchaseOrderAcceptedListener;
 
-use App\Events\PurchaseReceivedEvent;
-use App\Listeners\PurchaseReceivedListener;
-
-use App\Models\PurchaseOrder;
-use App\Observers\PurchaseOrderObserver;
 
 class EventServiceProvider extends ServiceProvider
 {
@@ -35,12 +28,7 @@ class EventServiceProvider extends ServiceProvider
             SetUpNewUserAccount::class,
             SendWelcomeEmail::class,
         ],
-        PurchaseOrderAcceptedEvent::class => [
-            PurchaseOrderAcceptedListener::class,
-        ],
-        PurchaseReceivedEvent::class => [
-            PurchaseReceivedListener::class,
-        ],
+        
     ];
 
     /**
@@ -49,7 +37,7 @@ class EventServiceProvider extends ServiceProvider
     public function boot(): void
     {
         //
-        PurchaseOrder::observe(PurchaseOrderObserver::class);
+       
     }
 
     /**
