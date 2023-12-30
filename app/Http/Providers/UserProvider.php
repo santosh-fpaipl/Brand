@@ -19,7 +19,15 @@ class UserProvider extends Provider
         }
 
         $users = Cache::remember('users', User::getCacheRemember(), function () use($request) {
-            return User::get();
+            if($request->has('party') && !empty($request->party)){
+                if($request->party == 'created'){
+                    return User::has('party')->get();
+                } else if($request->party == 'not_created'){
+                    return User::doesntHave('party')->get();
+                }   
+            } else {
+                return User::get();
+            }
         });
         
         return ApiResponse::success(UserResource::collection($users));

@@ -6,91 +6,87 @@ use App\Http\Providers\Provider;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Http\Responses\ApiResponse;
-use Illuminate\Support\Facades\Cache;
-use App\Http\Requests\ReadyCreateRequest;
-use App\Http\Resources\ReadyResource;
+use App\Http\Requests\AdjustmentRequest;
+use App\Http\Resources\AdjustmentResource;
 use App\Http\Fetchers\DsFetcher;
-use App\Events\ReloadDataEvent;
-use Carbon\Carbon;
-use App\Models\Ready;
-use App\Models\ReadyItem;
 use App\Models\Ledger;
+use App\Models\Adjustment;
+use App\Models\AdjustmentItem;
 use App\Models\Stock;
+use App\Models\Order;
+use Illuminate\Support\Facades\Cache;
 use App\Models\Chat;
 use App\Models\Chatable;
-use Exception;
+use Carbon\Carbon;
 
-class ReadyProvider extends Provider
+class AdjustmentProvider extends Provider
 {
+
     /**
      * Display a listing of the resource.
      */
     public function index(Request $request)
     {
         if (env('APP_DEBUG')) {
-            Cache::forget('readies');
+            Cache::forget('adjustments');
         }
-       
-        $readies = Cache::remember('readies', Ready::getCacheRemember(), function () use($request) {
-
+    
+        $adjustments = Cache::remember('adjustments', Adjustment::getCacheRemember(), function () use ($request) {
             $user = auth()->user();
             if ($user->isStaff()) {
-                return Ready::staffRedies($user->id, $request->ledger_sid)->get();
+                return Adjustment::staffAdjustments($user->id)->get();
             } elseif ($user->isFabricator()) {
-                return Ready::fabricatorRedies($user->id, $request->ledger_sid)->get();
+                return Adjustment::fabricatorAdjustments($user->id)->get();
             } else {
-                return Ready::managerRedies($request->ledger_sid)->get();
+                return Adjustment::managerAdjustments()->get();
             }
-            
-            return Ready::orderBy('created_at', 'desc')->get(); // take(5)->
         });
-
-        return ApiResponse::success(ReadyResource::collection($readies));
-       
+    
+        return ApiResponse::success(AdjustmentResource::collection($adjustments));
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(ReadyCreateRequest $request)
+    public function store(AdjustmentRequest $request)
     {
-        // Only staff & manager can create order
-        if (!auth()->user()->isManager() && !auth()->user()->isFabricator()) {
+        if(auth()->user()->isFabricator()){
             return ApiResponse::error('Invalid request', 422);
         }
 
         DB::beginTransaction();
         try{
 
-            //$quantities = '[{"green1_free":200},{"blue1_free":200}]';
+            //$quantities = '[{"green1_free":1313},{"blue1_free":1313}]';
             $quantities = $request->quantities;
+
+            $quantity = $this->calculateQuantity($quantities);
+
+            $product = Cache::get($request->product_sid.date('dmy'));
 
             $ledger = Ledger::where('sid', $request->ledger_sid)->first();
 
-            if($this->calculateQuantity($quantities) > $ledger->balance_qty){
-                throw new Exception('Ready quantity must be less than or equal to ledger balance quantity.');
+            switch ($request->type) {
+                case 'order':
+                    $ledger->balance_qty = $ledger->balance_qty - $quantity;
+                    $ledger->last_activity = 'order';
+                    break;
+                case 'ready':
+                    $ledger->demandable_qty = $ledger->demandable_qty - $quantity;
+                    $ledger->last_activity = 'ready';
+                case 'demand':
+                    $ledger->balance_qty = $ledger->balance_qty + $quantity;
+                    $ledger->demandable_qty = $ledger->demandable_qty + $quantity;
+                    $ledger->last_activity = 'demand';
+                default: break;
             }
 
-            $ready = Ready::create([
-                'sid' => Ready::generateId(),
+            $ledger->save();
+
+            $adjustment = Adjustment::create([
+                'sid' => Adjustment::generateId(),
+                'type' => $request->type,
                 'ledger_id' => $ledger->id,
                 'quantity' => $this->calculateQuantity($quantities), //Sum of all quantities
                 'user_id' => auth()->user()->id,
-                
             ]);
-
-            //Update last_activity
-                if($ledger->last_activity != 'ready'){
-                    $ledger->last_activity = 'ready';
-                    $ledger->save();
-                }
-            //end of last_activity
-
-
-            //balance_qty = Total(order-demand)
-            //demandable_qty = Total(ready-demand) 
-            $ledger->demandable_qty = $ledger->demandable_qty + $ready->quantity;
-            $ledger->save();
 
             $dsFetcherObj = new DsFetcher();
             $params = '?'.$dsFetcherObj->api_secret();
@@ -100,7 +96,8 @@ class ReadyProvider extends Provider
                 throw new \Exception('#FB145 - Something went wrong, please try again later.');
             } 
 
-            $quantities_arr = json_decode($quantities,true); 
+            $quantities_arr = json_decode($quantities,true);
+
             foreach($quantities_arr as $color_arr){
                 foreach($color_arr as $color_size_sid => $qty){
                     $temp_arr = explode('_', $color_size_sid);
@@ -130,22 +127,20 @@ class ReadyProvider extends Provider
 
                     if(!empty($stock)){
 
-                        ReadyItem::create([
-
+                        AdjustmentItem::create([
                             'stock_id' => $stock->id,
-                            'ready_id' => $ready->id,
+                            'adjustment_id' => $adjustment->id,
                             'quantity' => $qty,
-
                         ]);
 
                     }
                 }
             }
 
-            if($request->has('message') && !empty($request->message)){
+            if($request->has('note') && !empty($request->note)){
 
                 $chat = Chat::create([
-                    'message' => $request->message,
+                    'message' => $request->note,
                     'ledger_id' => $ledger->id,
                     'sender_id' => auth()->user()->id,
                     'delivered_at' => Carbon::now(),
@@ -153,64 +148,31 @@ class ReadyProvider extends Provider
                 // Create the morph relationship in the chatable table
                 Chatable::create([
                     'chat_id' => $chat->id,
-                    'chatable_id' => $ready->id,
-                    'chatable_type' => Ready::class,
+                    'chatable_id' => $adjustment->id,
+                    'chatable_type' => Adjustment::class,
                 ]);
             }
-              
+         
             DB::commit();
-
-            //To send the message to pusher
-            ReloadDataEvent::dispatch(env('PUSHER_MESSAGE'));
-            //End of pusher
 
         } catch(\Exception $e){
             DB::rollBack();
             return ApiResponse::error($e->getMessage(), 404);
         }
-        return ApiResponse::success(new ReadyResource($ready));
-    }
 
-
-    /**
-     * Display the specified resource.
-     */
-    public function show(Request $request, Ready $ready)
-    {
-        if(auth()->user()->isStaff()){
-            if($ready->ledger->order->user_id != auth()->user()->id){
-                return ApiResponse::error('Invalid request', 422);
-            }
-        } else if(auth()->user()->isFabricator()){
-            if($ready->user_id != auth()->user()->id){
-                return ApiResponse::error('Invalid request', 422);
-            }
-        }
-
-        if (env('APP_DEBUG')) {
-            Cache::forget('ready' . $ready);
-        }
-        $ready = Cache::remember('order' . $ready, Ready::getCacheRemember(), function () use ($ready) {
-            return $ready;
-        });
-        return ApiResponse::success(new ReadyResource($ready));
+        return ApiResponse::success(new AdjustmentResource($adjustment));
     }
 
      /**
      * Sum of all quantities 
      */
     private function calculateQuantity($quantities){
-
-        //$quantities = '[{"green1_free":200},{"blue1_free":200}]';
-        
+        //$quantities = '[{"green1_free":1313},{"blue1_free":1313}]';
         $quantity = 0;
-
         $quantities = json_decode($quantities, true);
-
         foreach ($quantities as $qty) {
             $quantity += array_sum($qty);
         }
-
         return $quantity;
     }
    

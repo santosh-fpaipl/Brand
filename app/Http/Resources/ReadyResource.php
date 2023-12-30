@@ -23,6 +23,7 @@ class ReadyResource extends JsonResource
             'ledger_id' => $this->ledger_id,
             'quantity' => $this->quantity,
             'user' => new UserResource($this->user),
+            'note' =>  ChatResource::collection($this->chats),
             'readyItems' => ReadyItemResource::collection($this->readyItems),
         ];
     }

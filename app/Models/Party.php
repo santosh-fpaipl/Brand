@@ -19,6 +19,7 @@ use Spatie\Image\Manipulations;
 use Spatie\Permission\Traits\HasRoles;
 use App\Models\User;
 use App\Models\Chat;
+use App\Models\Ledger;
 use Illuminate\Support\Facades\Validator;
 
 class Party extends Model implements HasMedia
@@ -91,6 +92,24 @@ class Party extends Model implements HasMedia
 
     //End of cache remember time
 
+    // Helper Functions
+
+    public function scopeGetParty($query, $role, $status){
+        if($role){
+            $query->where('type', $role);
+        }
+        if($status){
+            if($status == 'active'){
+                $query->where('active', 1);
+            } else {
+                $query->where('active', 0);
+            }
+        }
+        return $query;
+    }
+
+    //End of Helper function
+
     //Relationship
 
     public function user()
@@ -101,6 +120,10 @@ class Party extends Model implements HasMedia
     public function messages()
     {
         return $this->hasMany(Chat::class);
+    }
+
+    public function ledgers(){
+        return $this->hasMany(Ledger::class);
     }
 
 

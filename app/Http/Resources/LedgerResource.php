@@ -4,9 +4,9 @@ namespace App\Http\Resources;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
-use App\Http\Resources\LedgerItemsCollection;
+use App\Http\Resources\StockLedgerItemResource;
 use App\Http\Resources\ChatResource;
-use App\Http\Resources\LedgerAdjustmentResource;
+use App\Http\Resources\PartyResource;
 
 class LedgerResource extends JsonResource
 {
@@ -25,12 +25,16 @@ class LedgerResource extends JsonResource
             "name" =>  $this->name,
             "product_sid" =>  $this->product_sid,
             "product_id" =>  $this->product_id,
-            "party_id" =>  $this->party_id,
+            "party_id" =>  new PartyResource($this->party),
             "balance_qty" =>  $this->balance_qty,
             "demandable_qty" =>  $this->demandable_qty,
-            'LedgerItems' => new LedgerItemsCollection([$this->orders, $this->readies, $this->demands, $this->ledgerAdjustments]),
+            'LedgerItems' => new LedgerItemsLedgerResource([
+                $this->orders, 
+                $this->readies, 
+                $this->demands, 
+                $this->adjustments
+            ]),
             'chats' => ChatResource::collection($this->chats),
-            //'adjustments' => LedgerAdjustmentResource::collection($this->ledgerAdjustments)
         ];
     }
 }

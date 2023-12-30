@@ -10,30 +10,25 @@ return new class extends Migration
      * Run the migrations.
      */
     public function up(): void
-    {        
-        Schema::create('orders', function (Blueprint $table) {
+    {
+        Schema::create('adjustments', function (Blueprint $table) {
             $table->id();
             $table->string('sid')->unique();
+            $table->enum('type', ['order', 'ready', 'demand']);
             $table->foreignId('ledger_id')->constrained();
             $table->integer('quantity')->default(0); // total of quantities
-            $table->date('expected_at');
-            $table->string('status')->default('issued'); // issued -> accepted, cancelled
             $table->foreignId('user_id')->constrained(); // created by user
-            $table->json('log_status_time')->nullable();
-            $table->boolean('reject')->default(0); // 1,0
             $table->timestamps();
             $table->softDeletes();
         });
 
-        Schema::create('order_items', function (Blueprint $table) {
+        Schema::create('adjustment_items', function (Blueprint $table) {
             $table->id();
             $table->foreignId('stock_id')->constrained(); // each sku
-            $table->foreignId('order_id')->constrained();
+            $table->foreignId('adjustment_id')->constrained();
             $table->integer('quantity')->default(0); // each quantity
             $table->timestamps();
         });
-
-        
     }
 
     /**
@@ -41,7 +36,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('order_items');
-        Schema::dropIfExists('orders');
+        Schema::dropIfExists('adjustments');
+        Schema::dropIfExists('adjustment_items');
     }
 };

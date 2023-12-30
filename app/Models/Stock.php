@@ -76,6 +76,25 @@ class Stock extends Model
         return $this->hasMany(DemandItem::class);
     }
 
+    public function skus() {
+        return $this->hasMany(Stock::class, 'product_sid', 'product_sid');
+    }
+
+    public function ledgers()
+    {
+        return $this->hasMany(Ledger::class, 'product_id', 'product_id')->get();
+    }
+
+    // public function ledgers($partyId = null)
+    // {
+    //     if ($partyId) {
+    //         return Ledger::where('party_id', $partyId)->where('product_sid', $this->product_sid)->get();
+    //     } else {
+    //         return Ledger::where('product_sid', $this->product_sid)->get();
+    //     }
+        
+    // }
+
     // Logging
 
     public function getActivitylogOptions(): LogOptions

@@ -7,6 +7,9 @@ use Illuminate\Validation\Validator;
 use Illuminate\Support\Facades\Http;
 use App\Http\Requests\BaseRequest;
 use App\Http\Fetchers\DsFetcher;
+use Illuminate\Support\Facades\Redis;
+use Illuminate\Support\Facades\Cache;
+use App\Rules\FabricatorTypeRule;
 
 class OrderCreateRequest extends FormRequest
 {
@@ -26,7 +29,7 @@ class OrderCreateRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'party_sid' => ['required', 'string', 'exists:parties,sid'],
+            'party_sid' => ['required', 'string', 'exists:parties,sid', new FabricatorTypeRule],
             'product_sid' => ['required', 'string', 'exists:stocks,product_sid'],
             'quantities' => ['required', 'string'],
             'expected_at' => 'required|after_or_equal:today|date_format:Y-m-d',
@@ -58,9 +61,11 @@ class OrderCreateRequest extends FormRequest
     private function checkProductExistsInDesignStudioApp()
     {
         $dsFetcherObj = new DsFetcher();
-        $params = $this->input('product_sid').'?'.$dsFetcherObj->api_secret().'&&check=available';
+        $params = $this->input('product_sid').'?'.$dsFetcherObj->api_secret();
         $response = $dsFetcherObj->makeApiRequest('get', '/api/products/', $params);
         if ($response->statusCode == 200 && $response->status == config('api.ok')) {
+            // redis store $response->product key product_slug + today('ddmmyy')
+            Cache::put($this->input('product_sid').date('dmy'), $response->data);
             return false;  // product exist
         }
         return true; // product doesn't exists

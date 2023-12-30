@@ -47,6 +47,7 @@ return new class extends Migration
             $table->foreignId('party_id')->constrained(); // fabricator party id
             $table->bigInteger('balance_qty'); // Total(order-demand) 
             $table->bigInteger('demandable_qty'); // Total(ready-demand) 
+            $table->string('last_activity')->nullable(); // order, ready, demand, adjustment
             $table->timestamps();
             $table->unique(['product_id', 'party_id']);
         });
@@ -54,12 +55,21 @@ return new class extends Migration
         Schema::create('chats', function (Blueprint $table) {
             $table->id();
             $table->text('message');
+            // $table->string('type');
+            // $table->unsignedBigInteger('type_model_id')->nullable();
             $table->foreignId('ledger_id')->constrained();
             $table->unsignedBigInteger('sender_id');
-            $table->foreign('sender_id')->references('id')->on('parties'); // staff, fabri, manager
+            $table->foreign('sender_id')->references('id')->on('users'); // staff, fabri, manager
             $table->timestamp('delivered_at')->nullable();
             $table->timestamp('recevied_at')->nullable();
             $table->timestamp('read_at')->nullable();
+            $table->timestamps();
+        });
+
+        Schema::create('chatables', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('chat_id');
+            $table->morphs('chatable');
             $table->timestamps();
         });
     }
@@ -72,5 +82,6 @@ return new class extends Migration
         Schema::dropIfExists('stocks');
         Schema::dropIfExists('ledgers');
         Schema::dropIfExists('chats');
+        Schema::dropIfExists('chatables');
     }
 };

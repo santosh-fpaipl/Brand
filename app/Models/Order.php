@@ -17,6 +17,7 @@ use Spatie\Permission\Traits\HasRoles;
 use App\Models\User;
 use App\Models\Ledger;
 use App\Models\OrderItem;
+use App\Models\Chat;
 
 class Order extends Model 
 {
@@ -38,12 +39,23 @@ class Order extends Model
         'log_status_time',
         'status',
         'user_id',
+        'reject',
     ];
     
     protected $cascadeDeletes = [];
     protected $CascadeSoftDeletesRestore = [];
     protected $dependency = [];
     
+    public static function setLog($key, $order = null)
+    {
+        if($key == self::STATUS[0]){
+            $log = [['status' => $key, 'time' => date('Y-m-d H:i:s')]];
+        } else {
+            $log = json_decode($order->log_status_time, true);
+            array_push($log, ['status' => $key, 'time' => date('Y-m-d H:i:s')]);
+        }
+        return json_encode($log);
+    }
     
     public const STATUS = ['issued','accepted','cancelled'];
     
@@ -107,6 +119,8 @@ class Order extends Model
         }
         return $query->orderBy('created_at', 'desc');
     }
+
+    
   
     // Relationships
 
@@ -120,6 +134,15 @@ class Order extends Model
 
     public function orderItems(){
         return $this->hasMany(OrderItem::class);
+    }
+
+    public function items()
+    {
+        return $this->orderItems;
+    }
+
+    public function chats(){
+        return $this->morphToMany(Chat::class, 'chatable');
     }
 
     // Logging
@@ -136,6 +159,7 @@ class Order extends Model
                     'log_status_time',
                     'status',
                     'user_id',
+                    'reject',
                     'created_at', 
                     'updated_at', 
                     'deleted_at'

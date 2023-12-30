@@ -13,7 +13,9 @@ use App\Models\Order;
 use App\Models\Ready;
 use App\Models\Demand;
 use App\Models\Chat;
-use App\Models\LedgerAdjustment;
+use App\Models\Adjustment;
+use App\Models\Party;
+use App\Models\Stock;
 
 class Ledger extends Model 
 {
@@ -31,6 +33,7 @@ class Ledger extends Model
         'party_id',
         'balance_qty',
         'demandable_qty',
+        'last_activity'
     ];
     
     protected $cascadeDeletes = [];
@@ -88,18 +91,22 @@ class Ledger extends Model
         return $query->orderBy('created_at', 'desc');
     }
 
-    public function scopeFabricatorLedgers($query, $productSid, $partyId)
+    public function scopeFabricatorLedgers($query, $productSid, $partySid = null)
     {
         $stock = Stock::where('product_sid', $productSid)->first();
         if($stock){
             $query->where('product_id' ,$stock->product_id);
         }
-        $query->where('party_id', $partyId);
+        if(!empty($partySid)){
+            $party = Party::where('sid', $partySid)->first();
+            $query->where('party_id', $party->id);
+        }
         return $query->orderBy('created_at', 'desc');
     }
 
     public function scopeManagerLedgers($query, $productSid = null, $partySid = null)
     {
+        
         if(!empty($productSid)){
             $stock = Stock::where('product_sid', $productSid)->first();
             $query->where('product_id',$stock->product_id);
@@ -107,15 +114,27 @@ class Ledger extends Model
 
         if(!empty($partySid)){
             $party = Party::where('sid', $partySid)->first();
-            $query->where('party_id', $party->party_id);
+            $query->where('party_id', $party->id);
         }
 
         return $query->orderBy('created_at', 'desc');
     }
 
-   
+    public function getLatestOrder(){
+        return $this->orders()->latest()->first();
+    }
+
+    public function latestorder()
+    {
+        return $this->hasOne(Order::class)->latest();
+    }
 
     // Relationships
+
+    public function stock()
+    {
+        return $this->belongsTo(Stock::class, 'product_id', 'product_id');
+    }
 
     public function orders(){
         return $this->hasMany(Order::class);
@@ -130,14 +149,16 @@ class Ledger extends Model
     }
 
     public function chats(){
-        return $this->hasMany(Chat::class);
-    }
-
-    public function ledgerAdjustments(){
-        return $this->hasMany(LedgerAdjustment::class);
+        return $this->morphToMany(Chat::class, 'chatable');
     }
     
+    public function adjustments(){
+        return $this->hasMany(Adjustment::class);
+    }
 
+    public function party(){
+        return $this->belongsTo(Party::class);
+    }
 
     // Logging
 
@@ -154,6 +175,7 @@ class Ledger extends Model
                     'balance_qty',
                     'demandable_qty',
                     'user_id',
+                    'last_activity',
                     'created_at', 
                     'updated_at', 
                     'deleted_at'

@@ -17,7 +17,7 @@ class PartyCreateRequest extends BaseRequest
         return [
             'user_id' => ['required','exists:users,id'],
             'sid' => ['required','unique:parties'],
-            'type' => ['required', 'in:staff,fabricator,manager,demo'],
+            'type' => ['required', 'in:staff,fabricator,manager'],
             'info' => ['nullable'],
             
         ];

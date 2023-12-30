@@ -24,6 +24,7 @@ class LedgerItemStockResource extends JsonResource
 
         return [
             "id" => $this->id,
+            "name" => $product->name,
             "sku" => $this->sku,
             "quantity" => $this->quantity,
             "product_sid" => $this->product_sid,

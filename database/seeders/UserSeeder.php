@@ -42,16 +42,52 @@ class UserSeeder extends Seeder
                 'sid' => 'A-001',
             ],
             [
-                'name' => 'Abhisekh',
+                'name' => 'Fabricator',
                 'email' => 'fabricator@gmail.com',
                 'role' => 'fabricator',
                 'sid' => 'A-002',
             ],
             [
-                'name' => 'Nikhil Singh',
-                'email' => 'nikhil@gmail.com',
-                'role' => 'staff',
+                'name' => 'Fabricator 11',
+                'email' => 'fabricator11@gmail.com',
+                'role' => 'fabricator',
                 'sid' => 'A-003',
+            ],
+            [
+                'name' => 'Fabricator 22',
+                'email' => 'fabricator22@gmail.com',
+                'role' => 'fabricator',
+                'sid' => 'A-004',
+            ],
+            [
+                'name' => 'Fabricator 33',
+                'email' => 'fabricator33@gmail.com',
+                'role' => 'fabricator',
+                'sid' => 'A-005',
+            ],
+            [
+                'name' => 'Fabricator 44',
+                'email' => 'fabricator44@gmail.com',
+                'role' => 'fabricator',
+                'sid' => 'A-006',
+            ],
+            [
+                'name' => 'Staff',
+                'email' => 'staff@gmail.com',
+                'role' => 'staff',
+                'sid' => 'A-007',
+            ],
+            [
+                'name' => 'Staff 11',
+                'email' => 'staff11@gmail.com',
+                'role' => 'staff',
+                'sid' => 'A-008',
+            ],
+            [
+                'name' => 'Staff 22',
+                'email' => 'staff22@gmail.com',
+                'role' => 'staff',
+                'sid' => 'A-009',
             ],
 
         ];
@@ -64,18 +100,19 @@ class UserSeeder extends Seeder
                 'password' => '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', // password
                 'remember_token' => Str::random(10),
             ]);
-            $newUser->assignRole($user['role']);
 
-            Party::create([
-                'user_id' => $newUser->id,
-                'business' => '',
-                'gst' => '',
-                'pan' => '',
-                'sid' => $user['sid'],
-                'type' => $user['role'],
-                'info' => '',
-                
-            ]);
+            if($user['role'] == 'manager' || $user['sid'] == 'A-007'){
+                $newUser->assignRole($user['role']);
+                Party::create([
+                    'user_id' => $newUser->id,
+                    'business' => '',
+                    'gst' => '',
+                    'pan' => '',
+                    'sid' => $user['sid'],
+                    'type' => $user['role'],
+                    'info' => '',
+                ]);
+            }
         }
     }
 }

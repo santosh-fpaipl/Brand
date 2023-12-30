@@ -18,6 +18,7 @@ use App\Models\DemandItem;
 use App\Models\Ledger;
 use App\Models\Stock;
 use App\Models\Chat;
+use App\Models\Chatable;
 use Exception;
 
 class DemandProvider extends Provider
@@ -63,90 +64,102 @@ class DemandProvider extends Provider
             //$quantities = '[{"green1_free":100},{"blue1_free":100}]';
             $quantities = $request->quantities;
 
-                $ledger = Ledger::where('sid', $request->ledger_sid)->first();
+            $ledger = Ledger::where('sid', $request->ledger_sid)->first();
 
-                if($this->calculateQuantity($quantities) > $ledger->demandable_qty){
-                    throw new Exception('Demand quantity must be less than or equal to ledger demandable quantity.');
-                }
+            if($this->calculateQuantity($quantities) > $ledger->demandable_qty){
+                throw new Exception('Demand quantity must be less than or equal to ledger demandable quantity.');
+            }
 
-                $demand = Demand::create([
-                    'sid' => Demand::generateId(),
-                    'ledger_id' => $ledger->id,
-                    'quantity' => $this->calculateQuantity($quantities), //Sum of all quantities
-                    'expected_at' => $request->expected_at,
-                    'user_id' => auth()->user()->id,
-                    
-                ]);
+            $demand = Demand::create([
+                'sid' => Demand::generateId(),
+                'ledger_id' => $ledger->id,
+                'quantity' => $this->calculateQuantity($quantities), //Sum of all quantities
+                'expected_at' => $request->expected_at,
+                'user_id' => auth()->user()->id,
+                
+            ]);
 
-                if(!empty($demand)){
-
-
-                    if($request->has('message') && !empty($request->message)){
-
-                        Chat::create([
-                            'message' => $request->message,
-                            'ledger_id' => $ledger->id,
-                            'sender_id' => auth()->user()->id,
-                            'delivered_at' => Carbon::now(),
-                        ]);
-                    }
-
-                    //balance_qty = Total(order-demand)
-                    //demandable_qty = Total(ready-demand) 
-                    $ledger->balance_qty = $ledger->balance_qty - $demand->quantity;
-                    $ledger->demandable_qty = $ledger->demandable_qty - $demand->quantity;
+            //Update last_activity
+                if($ledger->last_activity != 'demand'){
+                    $ledger->last_activity = 'demand';
                     $ledger->save();
+                }
+            //end of last_activity
 
-                    $dsFetcherObj = new DsFetcher();
-                    $params = '?'.$dsFetcherObj->api_secret();
-                    $response = $dsFetcherObj->makeApiRequest('get', '/api/products/'.$ledger->product_sid, $params);
-                    $product = $response->data;
-                    if($response->status == config('api.error')){
-                        throw new \Exception('#FB145 - Something went wrong, please try again later.');
-                    } 
+            
 
-                    $quantities_arr = json_decode($quantities,true); 
-                    foreach($quantities_arr as $color_arr){
-                        foreach($color_arr as $color_size_sid => $qty){
-                            $temp_arr = explode('_', $color_size_sid);
-                            $color_sid = $temp_arr[0];
-                            $size_sid = $temp_arr[1];
+            //balance_qty = Total(order-demand)
+            //demandable_qty = Total(ready-demand) 
+            $ledger->balance_qty = $ledger->balance_qty - $demand->quantity;
+            $ledger->demandable_qty = $ledger->demandable_qty - $demand->quantity;
+            $ledger->save();
 
-                            $color_id='';
-                            $size_id='';
+            $dsFetcherObj = new DsFetcher();
+            $params = '?'.$dsFetcherObj->api_secret();
+            $response = $dsFetcherObj->makeApiRequest('get', '/api/products/'.$ledger->product_sid, $params);
+            $product = $response->data;
+            if($response->status == config('api.error')){
+                throw new \Exception('#FB145 - Something went wrong, please try again later.');
+            } 
 
-                            foreach($product->options as $option_obj){
-                                if($option_obj->sid == $color_sid){
-                                    $color_id = $option_obj->id;
-                                    break;
-                                }
-                            }
+            $quantities_arr = json_decode($quantities,true); 
+            foreach($quantities_arr as $color_arr){
+                foreach($color_arr as $color_size_sid => $qty){
+                    $temp_arr = explode('_', $color_size_sid);
+                    $color_sid = $temp_arr[0];
+                    $size_sid = $temp_arr[1];
 
-                            foreach($product->ranges as $range_obj){
-                                if($range_obj->sid == $size_sid){
-                                    $size_id = $range_obj->id;
-                                    break;
-                                }
-                            }
+                    $color_id='';
+                    $size_id='';
 
-                            $stock_sku = $product->id.'-'.$color_id."-".$size_id;
-
-                            $stock = Stock::where('sku', $stock_sku)->first();
-
-                            if(!empty($stock)){
-
-                                DemandItem::create([
-
-                                    'stock_id' => $stock->id,
-                                    'demand_id' => $demand->id,
-                                    'quantity' => $qty,
-
-                                ]);
-
-                            }
+                    foreach($product->options as $option_obj){
+                        if($option_obj->sid == $color_sid){
+                            $color_id = $option_obj->id;
+                            break;
                         }
                     }
+
+                    foreach($product->ranges as $range_obj){
+                        if($range_obj->sid == $size_sid){
+                            $size_id = $range_obj->id;
+                            break;
+                        }
+                    }
+
+                    $stock_sku = $product->id.'-'.$color_id."-".$size_id;
+
+                    $stock = Stock::where('sku', $stock_sku)->first();
+
+                    if(!empty($stock)){
+
+                        DemandItem::create([
+
+                            'stock_id' => $stock->id,
+                            'demand_id' => $demand->id,
+                            'quantity' => $qty,
+
+                        ]);
+
+                    }
                 }
+            }
+
+            if($request->has('message') && !empty($request->message)){
+
+                $chat = Chat::create([
+                    'message' => $request->message,
+                    'ledger_id' => $ledger->id,
+                    'sender_id' => auth()->user()->id,
+                    'delivered_at' => Carbon::now(),
+                ]);
+                // Create the morph relationship in the chatable table
+                Chatable::create([
+                    'chat_id' => $chat->id,
+                    'chatable_id' => $demand->id,
+                    'chatable_type' => Demand::class,
+                ]);
+            }
+
             DB::commit();
 
             //To send the message to pusher

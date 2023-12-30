@@ -6,11 +6,12 @@ use App\Http\Providers\Provider;
 use Illuminate\Http\Request;
 use App\Http\Responses\ApiResponse;
 use Illuminate\Support\Facades\Cache;
-use App\Http\Resources\ChatResource;
+use App\Http\Resources\AllChatResource;
 use App\Http\Requests\ChatCreateRequest;
 use App\Events\ReloadDataEvent;
 use App\Models\Chat;
 use App\Models\Ledger;
+use App\Models\Chatable;
 use Carbon\Carbon;
 
 class ChatProvider extends Provider
@@ -33,7 +34,7 @@ class ChatProvider extends Provider
             }
         });
 
-        return ApiResponse::success(ChatResource::collection($chats));
+        return ApiResponse::success(AllChatResource::collection($chats));
        
     }
 
@@ -49,6 +50,13 @@ class ChatProvider extends Provider
                 'sender_id' => auth()->user()->id,
                 'delivered_at' => Carbon::now(),
             ]);
+
+            // Create the morph relationship in the chatable table
+            Chatable::create([
+                'chat_id' => $chat->id,
+                'chatable_id' => $ledger->id,
+                'chatable_type' => Ledger::class,
+            ]);
             
             //To send the message to pusher
             ReloadDataEvent::dispatch(env('PUSHER_MESSAGE'));
@@ -57,7 +65,7 @@ class ChatProvider extends Provider
         } catch(\Exception $e){
             return ApiResponse::error($e->getMessage(), 404);
         }
-        return ApiResponse::success(new ChatResource($chat));
+        return ApiResponse::success(new AllChatResource($chat));
     }
    
 }

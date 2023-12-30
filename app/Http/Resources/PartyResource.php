@@ -18,17 +18,26 @@ class PartyResource extends JsonResource
         //return parent::toArray($request);
 
         return [
-            "id" => $this->id,
+            //"id" => $this->id,
             "user" => new UserResource($this->user),
             "sid" => $this->sid,
             "business" => $this->business,
-            "gst" => $this->gst,
-            "pan" => $this->pan,
+            //"gst" => $this->gst,
+            //"pan" => $this->pan,
             "type" => $this->type,
-            "info" => $this->info,
-            "tags" => $this->tags,
+            //"info" => $this->info,
+            //"tags" => $this->tags,
             'active' => $this->active,
             "image" => $this->getImage('s100'),
+            "stats" => [
+                "alloted" => $this->ledgers->count(),
+                "running" => $this->ledgers->filter(function ($ledger) {
+                    return $ledger->balance_qty > 0;
+                })->count(),
+                "completed" => $this->ledgers->filter(function ($ledger) {
+                    return $ledger->balance_qty == 0 && $ledger->orders->isNotEmpty();
+                })->count(),
+            ],
         ];
     }
 }

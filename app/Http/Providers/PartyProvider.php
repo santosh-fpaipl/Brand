@@ -15,6 +15,7 @@ use App\Models\User;
 use App\Models\Party;
 use App\Models\Role;
 use Exception;
+use Illuminate\Support\Facades\Log;
 
 class PartyProvider extends Provider
 {
@@ -29,16 +30,9 @@ class PartyProvider extends Provider
         
         $parties = Cache::remember('parties', Party::getCacheRemember(), function () use($request) {
 
-            if ($request->has('role') && !empty($request->role)) {
+            if (($request->has('role') && !empty($request->role)) || ($request->has('status') && !empty($request->status))) {
 
-                return Party::where('type', $request->role)->orderBy('created_at', 'desc')->get();
-                
-                // $managerRole = Role::where('name', $request->role)->first();
-                // return Party::whereHas('user', function ($query) use ($managerRole) {
-                //     $query->whereHas('roles', function ($roleQuery) use ($managerRole) {
-                //         $roleQuery->where('role_id', $managerRole->id);
-                //     });
-                // })->get();
+                return Party::getParty($request->role, $request->status)->orderBy('created_at', 'desc')->get();
 
             } else {
 
@@ -113,6 +107,7 @@ class PartyProvider extends Provider
 
                 $party->manageTag($request->validated());
                 if($request->image){
+                   // Log::info('image');
                     $party->addSingleMediaToModal($request->image);
                 }
             }
@@ -166,20 +161,20 @@ class PartyProvider extends Provider
         return ApiResponse::success('Party updated successfully');
     }
 
-//    /**
-//      * Remove the specified resource from storage.
-//      */
-//     public function destroy(Party $party)
-//     {
-//         try{
-//             Party::softDeleteModel(
-//                 array($party->id), 
-//                 'App\Models\Party'
-//             );
-//         } catch(\Exception $e){
-//             return ApiResponse::error($e->getMessage(), 404);
-//         }
+    /**
+    * Remove the specified resource from storage.
+    */
+    public function destroy(Party $party)
+    {
+        try{
+            Party::softDeleteModel(
+                array($party->id), 
+                'App\Models\Party'
+            );
+        } catch(\Exception $e){
+            return ApiResponse::error($e->getMessage(), 404);
+        }
 
-//         return ApiResponse::success(null,'Record has been deleted.');
-//     }
+        return ApiResponse::success(null,'Record has been deleted.');
+    }
 }

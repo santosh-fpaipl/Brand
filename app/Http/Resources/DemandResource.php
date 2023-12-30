@@ -23,9 +23,10 @@ class DemandResource extends JsonResource
             'sid' => $this->sid,
             'ledger_id' => $this->ledger_id,
             'quantity' => $this->quantity,
-            'expected_at' => $this->expected_at,
+            'expected_at' => \Carbon\Carbon::parse($this->expected_at)->format('d-m-Y'),
             'status' => $this->status,
             'user' => new UserResource($this->user),
+            'note' =>  ChatResource::collection($this->chats),
             'demandItems' => DemandItemResource::collection($this->demandItems),
         ];
     }

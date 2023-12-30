@@ -19,7 +19,7 @@ class OrderItemResource extends JsonResource
 
         return [
             "id" => $this->id,
-            "stock_id" => new LedgerItemStockResource($this->stock),
+            "stock" => new LedgerItemStockResource($this->stock),
             "order_id" => $this->order_id,
             "quantity" => $this->quantity,
         ];

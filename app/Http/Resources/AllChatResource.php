@@ -8,7 +8,7 @@ use App\Http\Resources\LedgerResource;
 use App\Http\Resources\UserResource;
 use Illuminate\Support\Str;
 
-class ChatResource extends JsonResource
+class AllChatResource extends JsonResource
 {
     /**
      * Transform the resource into an array.
@@ -18,13 +18,9 @@ class ChatResource extends JsonResource
     public function toArray(Request $request): array
     {
         //return parent::toArray($request);
-
-        // print_r($this);
-        // exit;
-
         return [
             //"id" => $this->id,
-            "model" =>  Str::slug(Str::afterLast($this->pivot->chatable_type, '\\')),
+            "model" =>  Str::slug(Str::afterLast($this->chatable->chatable_type, '\\')),
             "message" => $this->message,
             //'ledger_id' => $this->ledger_id,
             "sender_id" => new UserResource($this->user),

@@ -3,28 +3,21 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
-use Fpaipl\Panel\Traits\CascadeSoftDeletes;
-use Fpaipl\Panel\Traits\CascadeSoftDeletesRestore;
 use Fpaipl\Panel\Traits\ManageModel;
 use Fpaipl\Panel\Traits\ManageTag;
 use Fpaipl\Panel\Traits\Authx;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
-use App\Models\User;
-use App\Models\ReadyItem;
 use App\Models\Ledger;
+use App\Models\User;
+use App\Models\AdjustmentItem;
 use App\Models\Chat;
 
-
-class Ready extends Model 
+class Adjustment extends Model 
 {
     use
         Authx,
-        SoftDeletes,
-        CascadeSoftDeletes,
-        CascadeSoftDeletesRestore,
         LogsActivity,
         ManageModel,
         ManageTag;
@@ -34,16 +27,13 @@ class Ready extends Model
         'ledger_id',
         'quantity',
         'user_id',
+        'type',
     ];
     
-    protected $cascadeDeletes = [];
-    protected $CascadeSoftDeletesRestore = [];
+    
     protected $dependency = [];
     
-    public function getRouteKeyName()
-    {
-        return 'sid';
-    }
+    
     
     //For Cache remember time
     public static $cache_remember; 
@@ -59,13 +49,12 @@ class Ready extends Model
 
     //End of cache remember time
 
-
     /*
         return something like this
-        DG-001
+        DG-ADJ-0001
     */
     public static function generateId() {
-        $static = 'DG-REDY';
+        $static = 'DG-ADJUST';
         // Retrieve the last order by ID and get its ID
         $lastOrder = self::orderBy('id', 'desc')->first();
         $serial = $lastOrder ? $lastOrder->id + 1 : 1; // If there's no order, start from 1
@@ -75,61 +64,49 @@ class Ready extends Model
 
     // Helper Functions
 
-    public function scopeStaffRedies($query, $userId, $ledgerSid = null)
-    {
-        if(!empty($ledgerSid)){
-            $query->where('ledger_sid', $ledgerSid);
-        }
-
-        return $query->whereHas('ledger', function ($query){
-        })->whereHas('orders', function($query) use($userId){
-            $query->where('user_id', $userId);
-        })->orderBy('created_at', 'desc');
-
-    }
-
-    public function scopeFabricatorRedies($query, $userId, $ledgerSid = null)
+    public function scopeStaffAdjustments($query, $userId)
     {
         $query->where('user_id', $userId);
-        if(!empty($ledgerSid)){
-            $query->where('ledger_sid', $ledgerSid);
-        }
         return $query->orderBy('created_at', 'desc');
     }
 
-    public function scopeManagerRedies($query, $ledgerSid = null)
+    public function scopeFabricatorAdjustments($query, $userId)
     {
-        if(!empty($ledgerSid)){
-            $query->where('ledger_sid', $ledgerSid);
-        }
-        
+        return $query->whereHas('ledger', function ($query) {
+            $query->where('party_id', auth()->user()->party->id);
+        })->orderBy('created_at', 'desc');
+    }
+
+    public function scopeManagerAdjustments($query)
+    {
         return $query->orderBy('created_at', 'desc');
     }
-  
+    
     // Relationships
 
-    public function user(){
-        return $this->belongsTo(User::class);
-    }
-
     public function ledger(){
+
         return $this->belongsTo(Ledger::class);
     }
 
-    public function readyItems(){
-        return $this->hasMany(ReadyItem::class);
+    public function user(){
+
+        return $this->belongsTo(User::class);
+    }
+
+    public function adjustmentItems(){
+        return $this->hasMany(AdjustmentItem::class);
     }
 
     public function items()
     {
-        return $this->readyItems;
+        return $this->adjustmentItems;
     }
 
     public function chats(){
         return $this->morphToMany(Chat::class, 'chatable');
     }
-
-
+   
     // Logging
 
     public function getActivitylogOptions(): LogOptions
@@ -137,13 +114,12 @@ class Ready extends Model
         return LogOptions::defaults()
             ->logOnly([
                     'id', 
-                    'sid',
+                    'user_id',
                     'ledger_id',
                     'quantity',
-                    'user_id',
+                    'type',
                     'created_at', 
                     'updated_at', 
-                    'deleted_at'
             ])->useLogName('model_log');
     }
 }

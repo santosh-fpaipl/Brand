@@ -98,7 +98,7 @@ class User extends Authenticatable implements MustVerifyEmail
 
     public function isManager(){
 
-        return auth()->user()->hasRole('manager');
+        return auth()->user()->hasRole(['staff', 'manager']);
     }
 
     public function isStaff(){
@@ -140,7 +140,7 @@ class User extends Authenticatable implements MustVerifyEmail
 
     public function chats()
     {
-        return $this->hasMany(Chat::class);
+        return $this->hasMany(Chat::class, 'sender_id');
     }
 
     

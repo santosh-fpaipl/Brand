@@ -29,7 +29,7 @@ class OrderUpdateJob implements ShouldQueue
     /**
      * Create a new job instance.
      */
-    public function __construct(Order $order, $request)
+    public function __construct(Order $order)
     {
         $this->order = $order;
         $this->data = [
@@ -39,7 +39,6 @@ class OrderUpdateJob implements ShouldQueue
             'purchase_order_sid' => $order->sid,
             'quantities' => json_encode($this->createQuantities($order)),
             'order_id' => $order->id,
-            //'expected_at' =>  $request->expected_at,
         ];
 
     }
@@ -68,7 +67,7 @@ class OrderUpdateJob implements ShouldQueue
             if($response->status == config('api.ok')){
                 $order = Order::findOrFail($this->data['order_id']);
                 $order->status = Order::STATUS[1];
-                //$order->expected_at = $this->data['expected_at'];
+                $order->log_status_time = Order::setLog(Order::STATUS[1], $order);
                 $order->update();
 
                 //balance_qty = Total(order-demand)

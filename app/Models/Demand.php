@@ -15,6 +15,8 @@ use Spatie\Activitylog\Traits\LogsActivity;
 use App\Models\User;
 use App\Models\DemandItem;
 use App\Models\Ledger;
+use App\Models\Chat;
+
 
 class Demand extends Model 
 {
@@ -118,6 +120,15 @@ class Demand extends Model
 
     public function demandItems(){
         return $this->hasMany(DemandItem::class);
+    }
+
+    public function items()
+    {
+        return $this->demandItems;
+    }
+
+    public function chats(){
+        return $this->morphToMany(Chat::class, 'chatable');
     }
 
     // Logging

@@ -3,22 +3,31 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
-use App\Http\Requests\BaseRequest;
 use Illuminate\Validation\Validator;
-use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Cache;
 use App\Http\Fetchers\DsFetcher;
+use App\Rules\FabricatorTypeRule;
 
-class StockRequest extends BaseRequest
+class LedgerCreateRequest extends FormRequest
 {
+    /**
+     * Determine if the user is authorized to make this request.
+     */
+    public function authorize(): bool
+    {
+        return true;
+    }
+
     /**
      * Get the validation rules that apply to the request.
      *
-     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array|string>
+     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {
         return [
-            'product_sid' => ['required','string'],
+            'party_sid' => ['required', 'string', 'exists:parties,sid', new FabricatorTypeRule],
+            'product_sid' => ['required', 'string', 'exists:stocks,product_sid'],
         ];
     }
 
@@ -29,8 +38,12 @@ class StockRequest extends BaseRequest
     {
         return [
             function (Validator $validator) {
+                
                 if ($this->checkProductExistsInDesignStudioApp()) {
-                    $validator->errors()->add('product_sid', 'Invalid product');
+                    $validator->errors()->add(
+                        'product_sid',
+                        'Invalid product'
+                    );
                 }
             }
         ];
@@ -39,9 +52,11 @@ class StockRequest extends BaseRequest
     private function checkProductExistsInDesignStudioApp()
     {
         $dsFetcherObj = new DsFetcher();
-        $params = $this->input('product_sid').'?'.$dsFetcherObj->api_secret().'&&check=available';
+        $params = $this->input('product_sid').'?'.$dsFetcherObj->api_secret();
         $response = $dsFetcherObj->makeApiRequest('get', '/api/products/', $params);
         if ($response->statusCode == 200 && $response->status == config('api.ok')) {
+            // redis store $response->product key product_slug + today('ddmmyy')
+            Cache::put($this->input('product_sid').date('dmy'), $response->data);
             return false;  // product exist
         }
         return true; // product doesn't exists

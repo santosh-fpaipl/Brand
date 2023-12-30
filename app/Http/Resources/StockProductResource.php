@@ -18,15 +18,14 @@ class StockProductResource extends JsonResource
     {
        // return parent::toArray($request);
 
-       return [
-        'name' => $this->name,
-        'id' => $this->id,
-        'sid' => $this->sid,
-        'image' => $this->getFirstImage($this->options),
-        'options' => ProductOptionResource::collection($this->options),
-        'ranges' => ProductRangeResource::collection($this->ranges),
-
-    ];
+        return [
+            'sid' => $this->sid,
+            'name' => $this->name,
+            // 'id' => $this->id,
+            'image' => $this->getFirstImage($this->options),
+            'options' => ProductOptionResource::collection($this->options),
+            'ranges' => ProductRangeResource::collection($this->ranges),
+        ];
     }
 
     private function getFirstImage($options): string

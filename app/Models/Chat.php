@@ -11,6 +11,10 @@ use Spatie\Activitylog\Traits\LogsActivity;
 
 use App\Models\User;
 use App\Models\Ledger;
+use App\Models\Order;
+use App\Models\Ready;
+use App\Models\Demand;
+use App\Models\Adjustment;
 
 class Chat extends Model 
 {
@@ -22,11 +26,14 @@ class Chat extends Model
 
     protected $fillable = [
         'message',
+        'type',
+        'type_model_id',
         'ledger_id',
         'sender_id',
         'delivered_at',
         'read_at',
     ];
+
     
     protected $cascadeDeletes = [];
     protected $CascadeSoftDeletesRestore = [];
@@ -59,7 +66,34 @@ class Chat extends Model
         return $this->belongsTo(Ledger::class);
     }
 
-    
+    public function orders()
+    {
+        return $this->morphedByMany(Order::class, 'chatable');
+    }
+
+    public function readies()
+    {
+        return $this->morphedByMany(Ready::class, 'chatable');
+    }
+
+    public function demands()
+    {
+        return $this->morphedByMany(Demand::class, 'chatable');
+    }
+
+    public function adjustments()
+    {
+        return $this->morphedByMany(Adjustment::class, 'chatable');
+    }
+
+    public function ledgers()
+    {
+        return $this->morphedByMany(Ledger::class, 'chatable');
+    }
+
+    public function chatable(){
+        return $this->hasOne(Chatable::class);
+    }
 
     // Logging
 
@@ -69,6 +103,8 @@ class Chat extends Model
             ->logOnly([
                     'id', 
                     'message',
+                    'type',
+                    'type_model_id',
                     'ledger_id',
                     'sender_id',
                     'delivered_at',

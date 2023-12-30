@@ -17,7 +17,9 @@ return new class extends Migration
             $table->foreignId('ledger_id')->constrained();
             $table->integer('quantity')->default(0); // total of quantities
             $table->date('expected_at');
+            $table->string('status')->default('raised'); // raised -> completed
             $table->foreignId('user_id')->constrained(); // created by user
+            $table->json('log_status_time')->nullable();
             $table->timestamps();
             $table->softDeletes();
         });
